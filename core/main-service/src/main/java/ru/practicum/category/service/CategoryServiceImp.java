@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.model.dto.CategoryDto;
 import ru.practicum.category.model.dto.CategoryRequest;
-import ru.practicum.category.model.mapper.CategoryMapper;
+import ru.practicum.category.mapper.CategoryMapper;
 import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.exception.ConflictException;

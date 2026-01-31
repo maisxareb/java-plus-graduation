@@ -10,7 +10,7 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.model.User;
 import ru.practicum.user.model.dto.UserDto;
 import ru.practicum.user.model.dto.UserRequest;
-import ru.practicum.user.model.mapper.UserMapper;
+import ru.practicum.user.mapper.UserMapper;
 import ru.practicum.user.repository.UserRepository;
 
 import java.util.ArrayList;

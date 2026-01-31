@@ -1,4 +1,4 @@
-package ru.practicum.compilation.model.mapper;
+package ru.practicum.compilation.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -8,7 +8,7 @@ import ru.practicum.compilation.model.Compilation;
 import ru.practicum.compilation.model.dto.CompilationDto;
 import ru.practicum.compilation.model.dto.NewCompilationDto;
 import ru.practicum.event.model.Event;
-import ru.practicum.event.model.mapper.EventMapper;
+import ru.practicum.event.mapper.EventMapper;
 
 import java.util.Map;
 import java.util.Set;

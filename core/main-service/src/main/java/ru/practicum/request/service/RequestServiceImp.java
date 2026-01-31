@@ -14,11 +14,11 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.request.model.Request;
 import ru.practicum.request.model.RequestStatus;
 import ru.practicum.request.model.dto.RequestDto;
-import ru.practicum.request.model.mapper.RequestMapper;
+import ru.practicum.request.mapper.RequestMapper;
 import ru.practicum.request.repository.RequestRepository;
 import ru.practicum.user.model.User;
 import ru.practicum.user.model.dto.UserDto;
-import ru.practicum.user.model.mapper.UserMapper;
+import ru.practicum.user.mapper.UserMapper;
 import ru.practicum.user.repository.UserRepository;
 import ru.practicum.user.service.UserService;
 

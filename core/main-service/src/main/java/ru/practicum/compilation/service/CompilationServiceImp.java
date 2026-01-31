@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.compilation.model.Compilation;
-import ru.practicum.compilation.model.mapper.CompilationMapper;
+import ru.practicum.compilation.mapper.CompilationMapper;
 import ru.practicum.compilation.model.dto.CompilationDto;
 import ru.practicum.compilation.model.dto.NewCompilationDto;
 import ru.practicum.compilation.model.dto.UpdateCompilationRequest;

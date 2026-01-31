@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.comment.model.Comment;
 import ru.practicum.comment.model.dto.CommentRequest;
 import ru.practicum.comment.model.dto.CommentResponse;
-import ru.practicum.comment.model.mapper.CommentMapper;
+import ru.practicum.comment.mapper.CommentMapper;
 import ru.practicum.comment.repository.CommentRepository;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.repository.EventRepository;
@@ -15,7 +15,6 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.model.User;
 import ru.practicum.user.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;

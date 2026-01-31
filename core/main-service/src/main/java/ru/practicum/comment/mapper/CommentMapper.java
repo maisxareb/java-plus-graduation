@@ -1,4 +1,4 @@
-package ru.practicum.comment.model.mapper;
+package ru.practicum.comment.mapper;
 
 import ru.practicum.comment.model.Comment;
 import ru.practicum.comment.model.dto.CommentRequest;
