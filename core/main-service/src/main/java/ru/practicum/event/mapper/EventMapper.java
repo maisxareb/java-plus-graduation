@@ -1,6 +1,5 @@
 package ru.practicum.event.mapper;
 
-import org.mapstruct.*;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.mapper.CategoryMapper;
 import ru.practicum.event.model.Event;
@@ -13,53 +12,80 @@ import ru.practicum.user.mapper.UserMapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Mapper(componentModel = "spring",
-        uses = {CategoryMapper.class, UserMapper.class},
-        unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface EventMapper {
-    DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+public class EventMapper {
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "publishedOn", ignore = true)
-    @Mapping(target = "eventDate", expression = "java(parseEventDate(newEventDto.getEventDate()))")
-    @Mapping(target = "category", source = "category")
-    @Mapping(target = "initiator", source = "user")
-    @Mapping(target = "confirmedRequests", constant = "0")
-    @Mapping(target = "state", constant = "PENDING")
-    @Mapping(target = "location", ignore = true)
-    Event toEvent(NewEventDto newEventDto, Category category, User user);
-
-    @Mapping(target = "id", source = "eventFullDto.id")
-    @Mapping(target = "createdOn", expression = "java(parseEventDate(eventFullDto.getCreatedOn()))")
-    @Mapping(target = "publishedOn", expression = "java(parseEventDate(eventFullDto.getPublishedOn()))")
-    @Mapping(target = "eventDate", expression = "java(parseEventDate(eventFullDto.getEventDate()))")
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "initiator", source = "user")
-    @Mapping(target = "state", ignore = true)
-    @Mapping(target = "confirmedRequests", ignore = true)
-    @Mapping(target = "location", ignore = true)
-    Event toEvent(EventFullDto eventFullDto, User user);
-
-    @Mapping(target = "id", source = "event.id")
-    @Mapping(target = "eventDate", expression = "java(formatEventDate(event.getEventDate()))")
-    @Mapping(target = "category", source = "event.category")
-    @Mapping(target = "initiator", source = "event.initiator")
-    EventShortDto toShortDto(Event event, long views);
-
-    @Mapping(target = "id", source = "event.id")
-    @Mapping(target = "eventDate", expression = "java(formatEventDate(event.getEventDate()))")
-    @Mapping(target = "createdOn", expression = "java(formatEventDate(event.getCreatedOn()))")
-    @Mapping(target = "publishedOn", expression = "java(event.getPublishedOn() != null ? formatEventDate(event.getPublishedOn()) : null)")
-    @Mapping(target = "category", source = "event.category")
-    @Mapping(target = "initiator", source = "event.initiator")
-    EventFullDto toFullDto(Event event, long views);
-
-    default String formatEventDate(LocalDateTime date) {
-        return date != null ? date.format(TIME_FORMAT) : null;
+    public static Event toEvent(NewEventDto newEventDto, Category category, User user) {
+        Event event = new Event();
+        event.setAnnotation(newEventDto.getAnnotation());
+        event.setCategory(category);
+        event.setCreatedOn(LocalDateTime.now());
+        event.setDescription(newEventDto.getDescription());
+        event.setEventDate(LocalDateTime.parse(newEventDto.getEventDate(), TIME_FORMAT));
+        event.setInitiator(user);
+        event.setLocation(newEventDto.getLocation());
+        event.setPaid(newEventDto.isPaid());
+        event.setParticipantLimit(newEventDto.getParticipantLimit());
+        event.setPublishedOn(LocalDateTime.now());
+        event.setRequestModeration(newEventDto.isRequestModeration());
+        event.setTitle(newEventDto.getTitle());
+        return event;
     }
 
-    default LocalDateTime parseEventDate(String date) {
-        return date != null ? LocalDateTime.parse(date, TIME_FORMAT) : null;
+    public static Event toEvent(EventFullDto eventFullDto, User user) {
+        Event event = new Event();
+        event.setId(eventFullDto.getId());
+        event.setAnnotation(eventFullDto.getAnnotation());
+        event.setCategory(CategoryMapper.toCategory(eventFullDto.getCategory()));
+        event.setConfirmedRequests(eventFullDto.getConfirmedRequests());
+        event.setCreatedOn(LocalDateTime.now());
+        event.setDescription(eventFullDto.getDescription());
+        event.setEventDate(LocalDateTime.parse(eventFullDto.getEventDate(), TIME_FORMAT));
+        event.setInitiator(user);
+        event.setLocation(eventFullDto.getLocation());
+        event.setPaid(eventFullDto.isPaid());
+        event.setParticipantLimit(eventFullDto.getParticipantLimit());
+        event.setPublishedOn(LocalDateTime.now());
+        event.setRequestModeration(eventFullDto.isRequestModeration());
+        event.setState(eventFullDto.getState());
+        event.setTitle(eventFullDto.getTitle());
+        return event;
+    }
+
+
+    public static EventShortDto toShortDto(Event event, long views) {
+        EventShortDto shortDto = new EventShortDto();
+        shortDto.setId(event.getId());
+        shortDto.setAnnotation(event.getAnnotation());
+        shortDto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
+        shortDto.setConfirmedRequests(event.getConfirmedRequests());
+        shortDto.setEventDate(event.getEventDate().format(TIME_FORMAT));
+        shortDto.setInitiator(UserMapper.toShortDto(event.getInitiator()));
+        shortDto.setPaid(event.isPaid());
+        shortDto.setTitle(event.getTitle());
+        shortDto.setViews(views);
+        return shortDto;
+    }
+
+
+    public static EventFullDto toFullDto(Event event, long views) {
+        EventFullDto eventFullDto = new EventFullDto();
+        eventFullDto.setId(event.getId());
+        eventFullDto.setAnnotation(event.getAnnotation());
+        eventFullDto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
+        eventFullDto.setConfirmedRequests(event.getConfirmedRequests());
+        eventFullDto.setCreatedOn(event.getCreatedOn().format(TIME_FORMAT));
+        eventFullDto.setDescription(event.getDescription());
+        eventFullDto.setEventDate(event.getEventDate().format(TIME_FORMAT));
+        eventFullDto.setInitiator(UserMapper.toShortDto(event.getInitiator()));
+        eventFullDto.setLocation(event.getLocation());
+        eventFullDto.setPaid((event.isPaid()));
+        eventFullDto.setParticipantLimit(event.getParticipantLimit());
+        eventFullDto.setPublishedOn(event.getPublishedOn().format(TIME_FORMAT));
+        eventFullDto.setRequestModeration(event.isRequestModeration());
+        eventFullDto.setState(event.getState());
+        eventFullDto.setTitle(event.getTitle());
+        eventFullDto.setViews(views);
+        return eventFullDto;
     }
 }

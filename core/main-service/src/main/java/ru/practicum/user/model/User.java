@@ -19,5 +19,4 @@ public class User {
     String name;
     @Column(name = "email", unique = true, nullable = false)
     String email;
-
 }

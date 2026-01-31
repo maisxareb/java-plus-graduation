@@ -49,10 +49,6 @@ public class EventServiceImpl implements EventService {
     private final UserService userService;
     private final RequestService requestService;
     private final EntityManager entityManager;
-    private final EventMapper eventMapper;
-    private final CategoryMapper categoryMapper;
-    private final UserMapper userMapper;
-    private final StatsClient statsClient;
 
     @Transactional
     @Override
@@ -62,20 +58,17 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Начало события должно быть минимум на два часа позднее текущего момента");
         }
 
-        CategoryDto categoryDto = categoryService.getById(newEventDto.getCategory());
-        Category category = categoryMapper.toCategory(categoryDto);
-
-        User user = userMapper.toUser(userService.getUserById(userId));
+        Category category = CategoryMapper.toCategory(categoryService.getById(newEventDto.getCategory()));
+        User user = UserMapper.toUser(userService.getUserById(userId));
 
         if (newEventDto.getDescription().trim().isEmpty() || newEventDto.getAnnotation().trim().isEmpty() || newEventDto.getParticipantLimit() < 0) {
             throw new ValidationException("Описание пустое");
         }
-        Event event = eventMapper.toEvent(newEventDto, category, user);
+        Event event = EventMapper.toEvent(newEventDto, category, user);
         Event savedEvent = eventJpaRepository.save(event);
 
-        return eventMapper.toFullDto(savedEvent, 0);
+        return EventMapper.toFullDto(savedEvent, 0);
     }
-
 
     public List<EventShortDto> getEventsByCategory(int catId) {
         if (catId <= 0) {
@@ -85,26 +78,23 @@ public class EventServiceImpl implements EventService {
         if (events.isEmpty()) {
             return new ArrayList<>();
         }
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(events.stream().map(Event::getId).collect(Collectors.toList()));
-
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(events.stream().map(Event::getId).collect(Collectors.toList()));
 
         return events.stream()
-                .map(e -> eventMapper.toShortDto(e, idViewsMap.getOrDefault(e.getId(), 0L)))
+                .map(e -> EventMapper.toShortDto(e, idViewsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
-
     public List<EventShortDto> getAllByUser(int userId, int from, int size) {
-
         PageRequest page = PageRequest.of(from / size, size, Sort.by("id").ascending());
 
         List<Event> events = eventJpaRepository.getAllByUser(userId, page);
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(events.stream()
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList()));
 
         return events.stream()
-                .map(e -> eventMapper.toShortDto(e, idViewsMap.getOrDefault(e.getId(), 0L)))
+                .map(e -> EventMapper.toShortDto(e, idViewsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
@@ -113,18 +103,17 @@ public class EventServiceImpl implements EventService {
         if (event == null) {
             throw new NotFoundException(String.format("События с id=%d и initiatorId=%d не найдено", eventId, userId));
         }
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(List.of(event.getId()));
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
 
-        return eventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L));
+        return EventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L));
     }
-
 
     public EventFullDto getEvent(long eventId) {
         Event event = eventJpaRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("События с id=%d не найдено", eventId)));
 
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(List.of(event.getId()));
-        return eventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L));
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
+        return EventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L));
     }
 
     public EventFullDto getEvent(int eventId, HttpServletRequest request) {
@@ -138,11 +127,10 @@ public class EventServiceImpl implements EventService {
         endpointHitDto.setTimestamp(LocalDateTime.now().format(TIME_FORMAT));
         endpointHitDto.setUri(request.getRequestURI());
 
-        statsClient.postHit(endpointHitDto);
+        StatsClient.postHit(endpointHitDto);
 
         return eventDto;
     }
-
 
     @Transactional
     public EventFullDto updateEvent(int userId, int eventId, UpdateEventUserRequest updateRequest) {
@@ -163,7 +151,7 @@ public class EventServiceImpl implements EventService {
         if (categoryId != null && categoryId > 0) {
             CategoryDto categoryDto = categoryService.getById(categoryId);
             if (categoryDto != null) {
-                event.setCategory(categoryMapper.toCategory(categoryDto));
+                event.setCategory(CategoryMapper.toCategory(categoryDto));
             }
         }
         String newDateString = updateRequest.getEventDate();
@@ -183,14 +171,13 @@ public class EventServiceImpl implements EventService {
         }
         if (updateRequest.getParticipantLimit() != null) {
             if (updateRequest.getParticipantLimit() < 0) {
-                throw new ValidationException("Лимит участников не может быть отрицательным");
+                throw new ValidationException("Participant limit cannot be negative");
             }
             event.setParticipantLimit(updateRequest.getParticipantLimit());
         }
         if (updateRequest.getRequestModeration() != null) {
             event.setRequestModeration(updateRequest.getRequestModeration());
         }
-
 
         String stateString = updateRequest.getStateAction();
         if (stateString != null && !stateString.isBlank()) {
@@ -209,14 +196,13 @@ public class EventServiceImpl implements EventService {
         }
 
         eventJpaRepository.save(event);
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(List.of(event.getId()));
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
 
         Event updatedEvent = eventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%d не найден", event.getId())));
 
-        return eventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(event.getId(), 0L));
+        return EventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(event.getId(), 0L));
     }
-
 
     @Transactional
     public EventFullDto updateAdminEvent(long eventId, UpdateEventAdminRequest adminRequest) {
@@ -231,7 +217,7 @@ public class EventServiceImpl implements EventService {
         if (categoryId != null && categoryId > 0) {
             CategoryDto categoryDto = categoryService.getById(categoryId);
             if (categoryDto != null) {
-                event.setCategory(categoryMapper.toCategory(categoryDto));
+                event.setCategory(CategoryMapper.toCategory(categoryDto));
             }
         }
         String description = adminRequest.getDescription();
@@ -260,7 +246,6 @@ public class EventServiceImpl implements EventService {
         if (adminRequest.getRequestModeration() != null) {
             event.setRequestModeration(adminRequest.getRequestModeration());
         }
-
 
         String stateString = adminRequest.getStateAction();
         if (stateString != null && !stateString.isBlank()) {
@@ -291,12 +276,12 @@ public class EventServiceImpl implements EventService {
         }
 
         eventJpaRepository.save(event);
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(List.of(event.getId()));
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
 
         Event updatedEvent = eventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%d не найден", event.getId())));
 
-        return eventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(event.getId(), 0L));
+        return EventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(event.getId(), 0L));
     }
 
     @Override
@@ -311,7 +296,6 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public List<RequestDto> getParticipationInfo(Long userId, Long eventId) {
-
         Event event = eventJpaRepository.getByIdAndUserId(eventId, userId);
         if (event == null) {
             throw new NotFoundException(String.format("События с id=%d и initiatorId=%d не найдено", eventId, userId));
@@ -397,13 +381,12 @@ public class EventServiceImpl implements EventService {
         typedQuery.setMaxResults(size);
         resultEvents = typedQuery.getResultList();
 
-        Map<Long, Long> idViewsMap = statsClient.getMapIdViews(resultEvents.stream().map(Event::getId).collect(Collectors.toList()));
+        Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(resultEvents.stream().map(Event::getId).collect(Collectors.toList()));
 
         return resultEvents.stream()
-                .map(e -> eventMapper.toFullDto(e, idViewsMap.getOrDefault(e.getId(), 0L)))
+                .map(e -> EventMapper.toFullDto(e, idViewsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toList());
     }
-
 
     @Transactional
     public List<EventShortDto> getEvents(EventParam p) {
@@ -476,9 +459,9 @@ public class EventServiceImpl implements EventService {
         endpointHitDto.setTimestamp(LocalDateTime.now().format(TIME_FORMAT));
         endpointHitDto.setUri(request.getRequestURI());
 
-        statsClient.postHit(endpointHitDto);
+        StatsClient.postHit(endpointHitDto);
 
-        Map<Long, Long> idViews = statsClient.getMapIdViews(resultEvents.stream().map(Event::getId).collect(Collectors.toList()));
+        Map<Long, Long> idViews = StatsClient.getMapIdViews(resultEvents.stream().map(Event::getId).collect(Collectors.toList()));
 
         Comparator<EventShortDto> comparator;
         if (sort != null && sort.equals("EVENT_DATE")) {
@@ -488,7 +471,7 @@ public class EventServiceImpl implements EventService {
         }
 
         return resultEvents.stream()
-                .map(e -> eventMapper.toShortDto(e, idViews.getOrDefault(e.getId(), 0L)))
+                .map(e -> EventMapper.toShortDto(e, idViews.getOrDefault(e.getId(), 0L)))
                 .sorted(comparator)
                 .collect(Collectors.toList());
     }
@@ -502,10 +485,10 @@ public class EventServiceImpl implements EventService {
         if (eventList == null || eventList.isEmpty()) {
             return new HashSet<>();
         }
-        Map<Long, Long> idViews = statsClient.getMapIdViews(eventList.stream().map(Event::getId).collect(Collectors.toList()));
+        Map<Long, Long> idViews = StatsClient.getMapIdViews(eventList.stream().map(Event::getId).collect(Collectors.toList()));
 
         return eventList.stream()
-                .map(e -> eventMapper.toFullDto(e, idViews.getOrDefault(e.getId(), 0L)))
+                .map(e -> EventMapper.toFullDto(e, idViews.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toSet());
     }
 
@@ -530,7 +513,6 @@ public class EventServiceImpl implements EventService {
         return updateResult;
     }
 
-
     @Transactional
     protected EventRequestStatusUpdateResult confirmAllRequests(Event event, List<RequestDto> requests, EventRequestStatusUpdateRequest updateRequest) {
         int confirmedRequestsAmount = event.getConfirmedRequests();
@@ -554,7 +536,6 @@ public class EventServiceImpl implements EventService {
         requestService.updateAll(updateResult.getConfirmedRequests(), event);
         return updateResult;
     }
-
 
     @Transactional
     protected EventRequestStatusUpdateResult confirmRequests(Event event, List<RequestDto> requests, EventRequestStatusUpdateRequest updateRequest) {

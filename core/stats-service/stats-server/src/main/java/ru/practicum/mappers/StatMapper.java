@@ -1,29 +1,33 @@
 package ru.practicum.mappers;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import ru.practicum.dto.StatisticsPostResponseDto;
 import ru.practicum.model.Statistics;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Mapper(componentModel = "spring")
-public interface StatMapper {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class StatMapper {
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Mapping(target = "timestamp", expression = "java(formatDate(statistics.getTimestamp()))")
-    StatisticsPostResponseDto toDto(Statistics statistics);
-
-    @Mapping(target = "timestamp", expression = "java(parseDate(dto.getTimestamp()))")
-    Statistics fromDto(StatisticsPostResponseDto dto);
-
-    default String formatDate(LocalDateTime date) {
-        return date != null ? date.format(TIME_FORMAT) : null;
+    public static StatisticsPostResponseDto toDto(Statistics statistics) {
+        return StatisticsPostResponseDto.builder()
+                .ip(statistics.getIp())
+                .app(statistics.getApp())
+                .uri(statistics.getUri())
+                .timestamp(statistics.getTimestamp().format(TIME_FORMAT))
+                .build();
     }
 
-    default LocalDateTime parseDate(String date) {
-        return date != null ? LocalDateTime.parse(date, TIME_FORMAT) : null;
+    public static Statistics fromDto(StatisticsPostResponseDto statisticsPostResponseDto) {
+        return Statistics.builder()
+                .uri(statisticsPostResponseDto.getUri())
+                .app(statisticsPostResponseDto.getApp())
+                .ip(statisticsPostResponseDto.getIp())
+                .timestamp(LocalDateTime.parse(statisticsPostResponseDto.getTimestamp(), TIME_FORMAT))
+                .build();
     }
 }

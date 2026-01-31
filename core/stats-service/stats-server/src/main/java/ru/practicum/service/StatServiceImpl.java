@@ -17,29 +17,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatServiceImpl implements StatService {
     private final StatisticsRepository statisticsRepository;
-    private final StatMapper statMapper; // Добавляем внедрение маппера
 
     @Transactional
     @Override
     public StatisticsPostResponseDto hit(StatisticsPostResponseDto statisticsPostResponseDto) {
-        // Используем внедренный маппер, а не статический вызов
-        Statistics statistics = statMapper.fromDto(statisticsPostResponseDto);
-        Statistics savedStatistics = statisticsRepository.save(statistics);
-        return statMapper.toDto(savedStatistics);
+        Statistics statistics = StatMapper.fromDto(statisticsPostResponseDto);
+        return StatMapper.toDto(statisticsRepository.save(statistics));
     }
 
-    @Transactional(readOnly = true) // Для read-операций лучше использовать readOnly = true
+    @Transactional
     @Override
     public List<StatisticsGetResponseDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         if (start.isAfter(end)) {
-            throw new RuntimeException("Время начала не может быть позднее времени конца выборки");
+            throw new RuntimeException("время начала не может быть поздне, чем  время конца выборки");
         }
         List<ViewStats> rows = switch ((unique ? 2 : 0) + ((uris != null && !uris.isEmpty()) ? 1 : 0)) {
             case 0 -> statisticsRepository.findStats(start, end);
             case 1 -> statisticsRepository.findStatsByUris(start, end, uris);
             case 2 -> statisticsRepository.findUniqueStats(start, end);
             case 3 -> statisticsRepository.findUniqueStatsByUris(start, end, uris);
-            default -> throw new RuntimeException("Некорректные параметры запроса");
+            default -> throw new RuntimeException();
         };
 
         return rows.stream()

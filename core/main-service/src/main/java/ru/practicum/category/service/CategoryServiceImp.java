@@ -23,7 +23,6 @@ public class CategoryServiceImp implements CategoryService {
 
     private final CategoryRepository repository;
     private final EventRepository eventRepository;
-    private final CategoryMapper categoryMapper;
     private final String errorMessageNotFound = "Категория с id = %d не найдена";
     private final String errorMessageAlreadyExist = "Категория с именем = %s уже существует";
 
@@ -31,7 +30,7 @@ public class CategoryServiceImp implements CategoryService {
     public List<CategoryDto> getAll(Integer from, Integer size) {
         PageRequest page = PageRequest.of(from, size, Sort.by("id").ascending());
         List<Category> categories = repository.findAll(page).getContent();
-        return categories.stream().map(categoryMapper::toCategoryDto).toList();
+        return categories.stream().map(CategoryMapper::toCategoryDto).toList();
     }
 
     @Override
@@ -39,7 +38,7 @@ public class CategoryServiceImp implements CategoryService {
         Category category = repository.findById(categoryId).orElseThrow(() ->
                 new NotFoundException(String.format(errorMessageNotFound, categoryId))
         );
-        return categoryMapper.toCategoryDto(category);
+        return CategoryMapper.toCategoryDto(category);
     }
 
     @Override
@@ -47,7 +46,7 @@ public class CategoryServiceImp implements CategoryService {
         if (repository.findAll().stream().map(Category::getName).anyMatch(name -> name.equals(categoryRequest.getName()))) {
             throw new ConstraintException(String.format(errorMessageAlreadyExist, categoryRequest.getName()));
         }
-        return categoryMapper.toCategoryDto(repository.save(categoryMapper.toCategory(categoryRequest)));
+        return CategoryMapper.toCategoryDto(repository.save(CategoryMapper.toCategory(categoryRequest)));
     }
 
     @Override
@@ -60,7 +59,7 @@ public class CategoryServiceImp implements CategoryService {
             throw new ConflictException(String.format(errorMessageAlreadyExist, categoryRequest.getName()));
         }
         category.setName(categoryRequest.getName());
-        return categoryMapper.toCategoryDto(repository.save(category));
+        return CategoryMapper.toCategoryDto(repository.save(category));
     }
 
     @Override
@@ -69,7 +68,7 @@ public class CategoryServiceImp implements CategoryService {
                 new NotFoundException(String.format(errorMessageNotFound, categoryId))
         );
         if (eventRepository.existsByCategory(category)) {
-            throw new ConflictException("Невозможно удалить категорию: с ней связаны события");
+            throw new ConflictException("Невозможно удалить категорию: существуют связанные с ней события");
         }
         repository.deleteById(categoryId);
     }

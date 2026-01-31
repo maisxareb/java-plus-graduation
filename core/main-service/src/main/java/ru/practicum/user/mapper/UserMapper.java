@@ -1,21 +1,38 @@
 package ru.practicum.user.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import ru.practicum.user.model.User;
 import ru.practicum.user.model.dto.UserDto;
 import ru.practicum.user.model.dto.UserRequest;
 import ru.practicum.user.model.dto.UserShortDto;
 
-@Mapper(componentModel = "spring")
-public interface UserMapper {
+public class UserMapper {
+    public static User toUser(UserRequest userRequest) {
+        User user = new User();
+        user.setEmail(userRequest.getEmail());
+        user.setName(userRequest.getName());
+        return user;
+    }
 
-    @Mapping(target = "id", ignore = true)
-    User toUser(UserRequest userRequest);
+    public static User toUser(UserDto userRequest) {
+        User user = new User();
+        user.setId(userRequest.getId());
+        user.setEmail(userRequest.getEmail());
+        user.setName(userRequest.getName());
+        return user;
+    }
 
-    User toUser(UserDto userDto);
+    public static UserDto toUserDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setEmail(user.getEmail());
+        userDto.setName(user.getName());
+        return userDto;
+    }
 
-    UserDto toUserDto(User user);
-
-    UserShortDto toShortDto(User user);
+    public static UserShortDto toShortDto(User user) {
+        UserShortDto userShortDto = new UserShortDto();
+        userShortDto.setId(user.getId());
+        userShortDto.setName(user.getName());
+        return userShortDto;
+    }
 }
