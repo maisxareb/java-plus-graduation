@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
+      server:
+        native:
+          searchLocations:
+            - classpath:config/infra/{application}
+            - classpath:config/core/{application}
+            - classpath:config/core/stats-service/{application}
+server:
+  port: 8888
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.netflix.discovery: DEBUG
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka/
