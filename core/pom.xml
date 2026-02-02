@@ -12,7 +12,6 @@
     <artifactId>core</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>stats-service</module>
         <module>main-service</module>
     </modules>
 
@@ -21,5 +20,14 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>ru.practicum</groupId>
+            <artifactId>stats-service</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
 
 </project>
