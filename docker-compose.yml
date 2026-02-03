@@ -1,26 +1,90 @@
 version: '3.8'
 
 services:
-  # Существующие базы данных
+  # Базы данных для всех сервисов
   stats-db:
     image: postgres:16.1
-    container_name: stats
+    container_name: stats-db
     ports:
       - "5433:5432"
     environment:
       - POSTGRES_DB=stats
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
 
-  main-db:
+  event-service-db:
     image: postgres:16.1
-    container_name: main
+    container_name: event-service-db
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=main
+      - POSTGRES_DB=event
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
+
+  user-service-db:
+    image: postgres:16.1
+    container_name: user-service-db
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=user
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
+
+  category-service-db:
+    image: postgres:16.1
+    container_name: category-service-db
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_DB=category
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
+
+  comment-service-db:
+    image: postgres:16.1
+    container_name: comment-service-db
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_DB=comment
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
+
+  compilation-service-db:
+    image: postgres:16.1
+    container_name: compilation-service-db
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_DB=compilation
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
+
+  request-service-db:
+    image: postgres:16.1
+    container_name: request-service-db
+    ports:
+      - "5438:5432"
+    environment:
+      - POSTGRES_DB=request
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - explore-network
 
   # Discovery Server (Eureka)
   discovery-server:
@@ -31,9 +95,16 @@ services:
     volumes:
       - ./infra/discovery-server/target/discovery-server-0.0.1-SNAPSHOT.jar:/app.jar
     command: java -jar /app.jar
+    networks:
+      - explore-network
     depends_on:
-      - main-db
       - stats-db
+      - event-service-db
+      - user-service-db
+      - category-service-db
+      - comment-service-db
+      - compilation-service-db
+      - request-service-db
 
   # Config Server
   config-server:
@@ -44,6 +115,8 @@ services:
     volumes:
       - ./infra/config-server/target/config-server-0.0.1-SNAPSHOT.jar:/app.jar
     command: java -jar /app.jar
+    networks:
+      - explore-network
     depends_on:
       - discovery-server
 
@@ -56,8 +129,11 @@ services:
     volumes:
       - ./infra/gateway-server/target/gateway-server-0.0.1-SNAPSHOT.jar:/app.jar
     command: java -jar /app.jar
+    networks:
+      - explore-network
     depends_on:
       - config-server
+      - discovery-server
 
   # Stats Server
   stats-server:
@@ -69,23 +145,151 @@ services:
       - ./stats-service/stats-server/target/stats-server-0.0.1-SNAPSHOT.jar:/app.jar
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
     command: java -jar /app.jar
+    networks:
+      - explore-network
     depends_on:
       - config-server
       - stats-db
+      - discovery-server
 
-  # Main Service
-  main-service:
+  # Event Service
+  event-service:
     image: openjdk:21-jdk-slim
-    container_name: main-service
+    container_name: event-service
     ports:
       - "8081:8081"
     volumes:
-      - ./core/main-service/target/main-service-0.0.1-SNAPSHOT.jar:/app.jar
+      - ./core/event-service/target/event-service-0.0.1-SNAPSHOT.jar:/app.jar
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://main-db:5432/main
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://event-service-db:5432/event
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - STATS_SERVER_URL=http://stats-server:9090
     command: java -jar /app.jar
+    networks:
+      - explore-network
     depends_on:
       - config-server
-      - main-db
+      - event-service-db
+      - discovery-server
       - stats-server
+
+  # User Service
+  user-service:
+    image: openjdk:21-jdk-slim
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./core/user-service/target/user-service-0.0.1-SNAPSHOT.jar:/app.jar
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-service-db:5432/user
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8082
+    command: java -jar /app.jar
+    networks:
+      - explore-network
+    depends_on:
+      - config-server
+      - user-service-db
+      - discovery-server
+
+  # Category Service
+  category-service:
+    image: openjdk:21-jdk-slim
+    container_name: category-service
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./core/category-service/target/category-service-0.0.1-SNAPSHOT.jar:/app.jar
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://category-service-db:5432/category
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8083
+    command: java -jar /app.jar
+    networks:
+      - explore-network
+    depends_on:
+      - config-server
+      - category-service-db
+      - discovery-server
+
+  # Comment Service
+  comment-service:
+    image: openjdk:21-jdk-slim
+    container_name: comment-service
+    ports:
+      - "8084:8084"
+    volumes:
+      - ./core/comment-service/target/comment-service-0.0.1-SNAPSHOT.jar:/app.jar
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://comment-service-db:5432/comment
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8084
+      - EVENT_SERVICE_URL=http://event-service:8081
+    command: java -jar /app.jar
+    networks:
+      - explore-network
+    depends_on:
+      - config-server
+      - comment-service-db
+      - discovery-server
+      - event-service
+
+  # Compilation Service
+  compilation-service:
+    image: openjdk:21-jdk-slim
+    container_name: compilation-service
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./core/compilation-service/target/compilation-service-0.0.1-SNAPSHOT.jar:/app.jar
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://compilation-service-db:5432/compilation
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8085
+      - EVENT_SERVICE_URL=http://event-service:8081
+      - STATS_SERVER_URL=http://stats-server:9090
+    command: java -jar /app.jar
+    networks:
+      - explore-network
+    depends_on:
+      - config-server
+      - compilation-service-db
+      - discovery-server
+      - event-service
+      - stats-server
+
+  # Request Service
+  request-service:
+    image: openjdk:21-jdk-slim
+    container_name: request-service
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./core/request-service/target/request-service-0.0.1-SNAPSHOT.jar:/app.jar
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://request-service-db:5432/request
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8086
+      - EVENT_SERVICE_URL=http://event-service:8081
+    command: java -jar /app.jar
+    networks:
+      - explore-network
+    depends_on:
+      - config-server
+      - request-service-db
+      - discovery-server
+      - event-service
+
+networks:
+  explore-network:
+    driver: bridge
