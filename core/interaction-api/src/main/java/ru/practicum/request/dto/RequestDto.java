@@ -12,12 +12,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RequestDto {
     String created;
-
     Long event;
-
     Long id;
-
     Long requester;
-
     RequestStatus status;
 }

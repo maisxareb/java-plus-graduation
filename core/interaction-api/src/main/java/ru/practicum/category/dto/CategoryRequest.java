@@ -13,7 +13,7 @@ import org.hibernate.validator.constraints.Length;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CategoryRequest {
-    @NotBlank(message = "Field: name. Error: must not be blank. Value: null")
+    @NotBlank(message = "Поле: name. Ошибка: не должно быть пустым. Значение: null")
     @Length(max = 50, min = 1)
     String name;
 }

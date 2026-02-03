@@ -1,4 +1,4 @@
-package ru.practicum.mapper;
+package ru.practicum.user.mapper;
 
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserShortDto;

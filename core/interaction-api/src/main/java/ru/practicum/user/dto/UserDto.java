@@ -12,10 +12,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDto {
     long id;
-
     @NotBlank
     String name;
-
     @Email
     @NotBlank
     String email;

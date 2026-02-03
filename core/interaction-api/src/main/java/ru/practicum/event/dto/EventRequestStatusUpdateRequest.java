@@ -12,6 +12,5 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventRequestStatusUpdateRequest {
     List<Integer> requestIds;
-
     UpdateRequestState status;
 }

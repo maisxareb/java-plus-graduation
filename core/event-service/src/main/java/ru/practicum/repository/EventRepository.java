@@ -24,5 +24,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT e FROM Event e WHERE e.id IN :ids")
     List<Event> findEventsByIdSet(@Param("ids") Set<Long> ids);
+
     boolean existsByCategory(Long category);
 }

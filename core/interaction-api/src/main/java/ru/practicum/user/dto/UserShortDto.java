@@ -13,7 +13,6 @@ import lombok.experimental.FieldDefaults;
 public class UserShortDto {
     @NotNull
     long id;
-
     @NotBlank
     String name;
 }

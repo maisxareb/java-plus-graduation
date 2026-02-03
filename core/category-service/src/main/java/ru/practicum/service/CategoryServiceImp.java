@@ -73,7 +73,7 @@ public class CategoryServiceImp implements CategoryService {
                 new NotFoundException(String.format(errorMessageNotFound, categoryId))
         );
         if (eventClient.existsByCategory(category.getId())) {
-            throw new ConflictException("Невозможно удалить категорию: существуют связанные события");
+            throw new ConflictException("Невозможно удалить категорию: существуют события, связанные с этой категорией");
         }
         repository.deleteById(categoryId);
     }

@@ -31,6 +31,7 @@ public class UserServiceImp implements UserService {
 
     @Override
     public UserDto addUser(UserRequest userRequest) {
+
         User currentUser = userRepository.getByEmail(userRequest.getEmail());
         if (currentUser != null) {
             throw new ConflictException("Пользователь уже существует");
@@ -47,7 +48,9 @@ public class UserServiceImp implements UserService {
         if (size != null && size < 1) {
             throw new PaginationException("Параметр 'size' должен быть >= 1");
         }
+
         List<User> users;
+
         if (ids != null && !ids.isEmpty()) {
             users = userRepository.findAllByIdInOrderById(ids);
         } else {
@@ -58,6 +61,7 @@ public class UserServiceImp implements UserService {
             );
             users = userRepository.findAll(page).getContent();
         }
+
         return users.stream()
                 .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
@@ -77,6 +81,7 @@ public class UserServiceImp implements UserService {
     public UserDto getUserById(long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%d не найден", userId)));
+
         return UserMapper.toUserDto(user);
     }
 

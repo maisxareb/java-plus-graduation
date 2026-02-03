@@ -39,6 +39,7 @@ public class RequestServiceImp implements RequestService {
     EventClient eventClient;
     UserClient userClient;
 
+
     @Override
     public List<RequestDto> getAll(Long userId) {
         UserDto userDto = userClient.getUser(userId);
@@ -48,6 +49,7 @@ public class RequestServiceImp implements RequestService {
     @Override
     public RequestDto create(Long userId, Long eventId) {
         UserDto requestor = userClient.getUser(userId);
+
         Optional<Request> duplicatedRequest = repository.findByEventIdAndRequesterId(eventId, userId);
         if (duplicatedRequest.isPresent()) {
             throw new CreateConditionException(String.format("Запрос от пользователя id = %d на событие c id = %d уже существует", userId, eventId));
@@ -95,6 +97,7 @@ public class RequestServiceImp implements RequestService {
         if (eventId < 0) {
             throw new BadParameterException("Id события должен быть больше 0");
         }
+
         List<Request> partRequests = repository.findAllByEventId(eventId);
         if (partRequests == null || partRequests.isEmpty()) {
             return new ArrayList<>();
@@ -110,13 +113,17 @@ public class RequestServiceImp implements RequestService {
                 .map(RequestDto::getRequester)
                 .collect(Collectors.toList());
         Map<Long, UserDto> users = userClient.getMapOfUsers(userIds);
+
         Map<Long, RequestDto> prDtoMap = requestDtoList.stream()
                 .collect(Collectors.toMap(RequestDto::getId, e -> e));
+
         Map<Long, UserDto> requestUserMap = requestDtoList.stream()
                 .collect(Collectors.toMap(RequestDto::getId, pr -> users.get(pr.getRequester())));
+
         List<Request> prList = requestDtoList.stream()
                 .map(pr -> RequestMapper.toRequest(pr, event, pr.getId()))
                 .toList();
+
         repository.saveAll(prList);
     }
 

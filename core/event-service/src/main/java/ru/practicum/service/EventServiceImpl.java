@@ -23,6 +23,7 @@ import ru.practicum.exception.BadParameterException;
 import ru.practicum.exception.CreateConditionException;
 import ru.practicum.exception.DataConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.user.mapper.UserSpecialMapper;
 import ru.practicum.model.Event;
 import ru.practicum.model.EventParam;
 import ru.practicum.mapper.EventMapper;
@@ -33,7 +34,6 @@ import ru.practicum.request.dto.RequestStatus;
 import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserShortDto;
-import ru.practicum.mapper.UserSpecialMapper;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -64,13 +64,16 @@ public class EventServiceImpl implements EventService {
         if (HOURS.between(LocalDateTime.now(), newEventDateTime) < 2) {
             throw new ValidationException("Начало события должно быть минимум на два часа позднее текущего момента");
         }
+
         CategoryDto category = categoryClient.getById(newEventDto.getCategory());
         UserDto user = userClient.getUser(userId);
+
         if (newEventDto.getDescription().trim().isEmpty() || newEventDto.getAnnotation().trim().isEmpty() || newEventDto.getParticipantLimit() < 0) {
             throw new ValidationException("Описание пустое");
         }
         Event event = EventMapper.toEvent(newEventDto, category.getId(), user.getId());
         Event savedEvent = eventJpaRepository.save(event);
+
         return EventMapper.toFullDto(savedEvent, 0, category, UserSpecialMapper.toShortDto(user));
     }
 
@@ -86,6 +89,7 @@ public class EventServiceImpl implements EventService {
         CategoryDto category = categoryClient.getById(catId);
         List<Long> initiatorIds = events.stream().mapToLong(Event::getInitiator).boxed().toList();
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
+
         return events.stream()
                 .map(e -> EventMapper.toShortDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
@@ -95,17 +99,23 @@ public class EventServiceImpl implements EventService {
     }
 
     public List<EventShortDto> getAllByUser(Long userId, int from, int size) {
+
         PageRequest page = PageRequest.of(from / size, size, Sort.by("id").ascending());
+
         List<Event> events = eventJpaRepository.findByInitiator(userId, page).getContent();
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList()));
+
         if (events.isEmpty()) {
             return new ArrayList<>();
         }
+
         UserDto user = userClient.getUser(userId);
+
         List<Long> categoryIds = events.stream().mapToLong(Event::getCategory).boxed().toList();
         Map<Long, CategoryDto> categoryDtoMap = categoryClient.getMap(categoryIds);
+
         return events.stream()
                 .map(e -> EventMapper.toShortDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
@@ -126,6 +136,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getEvent(Long eventId) {
         Event event = eventJpaRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("События с id=%d не найдено", eventId)));
+
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(event.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(event.getCategory());
@@ -142,9 +153,12 @@ public class EventServiceImpl implements EventService {
         endpointHitDto.setIp(request.getRemoteAddr());
         endpointHitDto.setTimestamp(LocalDateTime.now().format(TIME_FORMAT));
         endpointHitDto.setUri(request.getRequestURI());
+
         StatsClient.postHit(endpointHitDto);
+
         return eventDto;
     }
+
 
     @Transactional
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
@@ -152,6 +166,7 @@ public class EventServiceImpl implements EventService {
         if (event.getState() == EventState.PUBLISHED) {
             throw new BadParameterException("Нельзя обновлять событие в состоянии 'Опубликовано'");
         }
+
         String annotation = updateRequest.getAnnotation();
         if (!(annotation == null || annotation.isBlank())) {
             event.setAnnotation(annotation);
@@ -180,13 +195,15 @@ public class EventServiceImpl implements EventService {
         }
         if (updateRequest.getParticipantLimit() != null) {
             if (updateRequest.getParticipantLimit() < 0) {
-                throw new ValidationException("Participant limit cannot be negative");
+                throw new ValidationException("Лимит участников не может быть отрицательным");
             }
             event.setParticipantLimit(updateRequest.getParticipantLimit());
         }
         if (updateRequest.getRequestModeration() != null) {
             event.setRequestModeration(updateRequest.getRequestModeration());
         }
+
+
         String stateString = updateRequest.getStateAction();
         if (stateString != null && !stateString.isBlank()) {
             switch (StateActionUser.valueOf(stateString)) {
@@ -202,19 +219,24 @@ public class EventServiceImpl implements EventService {
         if (!(title == null || title.isBlank())) {
             event.setTitle(title);
         }
+
         eventJpaRepository.save(event);
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
+
         Event updatedEvent = eventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%d не найден", event.getId())));
+
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(updatedEvent.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(updatedEvent.getCategory());
         return EventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
     }
 
+
     @Transactional
     public EventFullDto updateAdminEvent(Long eventId, UpdateEventAdminRequest adminRequest) {
         Event event = eventJpaRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("События с id=%d не найдено", eventId)));
+
         String annotation = adminRequest.getAnnotation();
         if (!(annotation == null || annotation.isBlank())) {
             event.setAnnotation(annotation);
@@ -230,6 +252,7 @@ public class EventServiceImpl implements EventService {
         if (!(description == null || description.isBlank())) {
             event.setDescription(description);
         }
+
         String newDateString = adminRequest.getEventDate();
         if (!(newDateString == null || newDateString.isBlank())) {
             LocalDateTime newDate = LocalDateTime.parse(newDateString, TIME_FORMAT);
@@ -251,6 +274,8 @@ public class EventServiceImpl implements EventService {
         if (adminRequest.getRequestModeration() != null) {
             event.setRequestModeration(adminRequest.getRequestModeration());
         }
+
+
         String stateString = adminRequest.getStateAction();
         if (stateString != null && !stateString.isBlank()) {
             switch (StateActionAdmin.valueOf(stateString)) {
@@ -278,10 +303,13 @@ public class EventServiceImpl implements EventService {
         if (!(title == null || title.isBlank())) {
             event.setTitle(title);
         }
+
         eventJpaRepository.save(event);
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
+
         Event updatedEvent = eventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%d не найден", event.getId())));
+
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(updatedEvent.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(updatedEvent.getCategory());
         return EventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
@@ -292,6 +320,7 @@ public class EventServiceImpl implements EventService {
         if (eventIds == null || eventIds.isEmpty()) {
             return new HashSet<>();
         }
+
         List<Event> eventList = eventJpaRepository.findEventsByIdSet(eventIds);
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(eventList.stream().map(Event::getId).collect(Collectors.toList()));
         return new HashSet<>(eventList.stream().map(event -> EventMapper.toShortDto(
@@ -316,6 +345,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventJpaRepository.findByIdAndInitiator(eventId, userId).orElseThrow(() -> new NotFoundException(String.format("События с id=%d и initiatorId=%d не найдено", eventId, userId)));
         List<RequestDto> requests = requestClient.getAllRequestsEventId(eventId);
         int limit = event.getParticipantLimit();
+
         if (updateRequest.getStatus() == UpdateRequestState.REJECTED) {
             return rejectRequests(event, requests, updateRequest);
         } else {
@@ -336,10 +366,12 @@ public class EventServiceImpl implements EventService {
         LocalDateTime rangeEnd = p.getRangeEnd();
         int from = p.getFrom();
         int size = p.getSize();
+
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
         Root<Event> eventRoot = criteriaQuery.from(Event.class);
         criteriaQuery = criteriaQuery.select(eventRoot);
+
         List<Event> resultEvents;
         Predicate complexPredicate = null;
         if (rangeStart != null && rangeEnd != null) {
@@ -380,11 +412,15 @@ public class EventServiceImpl implements EventService {
         typedQuery.setFirstResult(from);
         typedQuery.setMaxResults(size);
         resultEvents = typedQuery.getResultList();
+
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(resultEvents.stream().map(Event::getId).collect(Collectors.toList()));
+
         List<Long> categoryIds = resultEvents.stream().mapToLong(Event::getCategory).boxed().toList();
         Map<Long, CategoryDto> categoryDtoMap = categoryClient.getMap(categoryIds);
+
         List<Long> initiatorIds = resultEvents.stream().mapToLong(Event::getInitiator).boxed().toList();
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
+
         return resultEvents.stream()
                 .map(e -> EventMapper.toFullDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
@@ -392,6 +428,7 @@ public class EventServiceImpl implements EventService {
                         UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
                 .collect(Collectors.toList());
     }
+
 
     @Transactional
     public List<EventShortDto> getEvents(EventParam p) {
@@ -405,18 +442,22 @@ public class EventServiceImpl implements EventService {
         int size = p.getSize();
         String sort = p.getSort();
         HttpServletRequest request = p.getRequest();
+
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
         Root<Event> eventRoot = criteriaQuery.from(Event.class);
         criteriaQuery.select(eventRoot);
+
         Predicate complexPredicate;
         if (rangeStart != null && rangeEnd != null) {
             complexPredicate = criteriaBuilder.between(eventRoot.get("eventDate").as(LocalDateTime.class), rangeStart, rangeEnd);
         } else {
             complexPredicate = criteriaBuilder.between(eventRoot.get("eventDate").as(LocalDateTime.class), LocalDateTime.now(), LocalDateTime.of(9999, 1, 1, 1, 1, 1));
         }
+
         if (text != null && !text.isBlank()) {
             String decodeText = URLDecoder.decode(text, StandardCharsets.UTF_8);
+
             Expression<String> annotationLowerCase = criteriaBuilder.lower(eventRoot.get("annotation"));
             Expression<String> descriptionLowerCase = criteriaBuilder.lower(eventRoot.get("description"));
             Predicate predicateForAnnotation = criteriaBuilder.like(annotationLowerCase, "%" + decodeText.toLowerCase() + "%");
@@ -424,6 +465,7 @@ public class EventServiceImpl implements EventService {
             Predicate predicateForText = criteriaBuilder.or(predicateForAnnotation, predicateForDescription);
             complexPredicate = criteriaBuilder.and(complexPredicate, predicateForText);
         }
+
         if (categories != null && !categories.isEmpty()) {
             if (categories.stream().anyMatch(c -> c <= 0)) {
                 throw new ValidationException("Id категории должен быть > 0");
@@ -431,38 +473,51 @@ public class EventServiceImpl implements EventService {
             Predicate predicateForCategoryId = eventRoot.get("category").in(categories);
             complexPredicate = criteriaBuilder.and(complexPredicate, predicateForCategoryId);
         }
+
         if (paid != null) {
             Predicate predicateForPaid = criteriaBuilder.equal(eventRoot.get("paid"), paid);
             complexPredicate = criteriaBuilder.and(complexPredicate, predicateForPaid);
         }
+
         if (onlyAvailable != null) {
             Predicate predicateForOnlyAvailable = criteriaBuilder.lt(eventRoot.get("confirmedRequests"), eventRoot.get("participantLimit"));
             complexPredicate = criteriaBuilder.and(complexPredicate, predicateForOnlyAvailable);
         }
+
         Predicate predicateForPublished = criteriaBuilder.equal(eventRoot.get("state"), EventState.PUBLISHED);
         complexPredicate = criteriaBuilder.and(complexPredicate, predicateForPublished);
+
         criteriaQuery.where(complexPredicate);
+
         TypedQuery<Event> typedQuery = entityManager.createQuery(criteriaQuery);
         typedQuery.setFirstResult(from);
         typedQuery.setMaxResults(size);
+
         List<Event> resultEvents = typedQuery.getResultList();
+
         StatisticsPostResponseDto endpointHitDto = new StatisticsPostResponseDto();
         endpointHitDto.setApp("main-event-service");
         endpointHitDto.setIp(request.getRemoteAddr());
         endpointHitDto.setTimestamp(LocalDateTime.now().format(TIME_FORMAT));
         endpointHitDto.setUri(request.getRequestURI());
+
         StatsClient.postHit(endpointHitDto);
+
         Map<Long, Long> idViews = StatsClient.getMapIdViews(resultEvents.stream().map(Event::getId).collect(Collectors.toList()));
+
         Comparator<EventShortDto> comparator;
         if (sort != null && sort.equals("EVENT_DATE")) {
             comparator = Comparator.comparing(e -> LocalDateTime.parse(e.getEventDate(), TIME_FORMAT));
         } else {
             comparator = Comparator.comparing(EventShortDto::getViews);
         }
+
         List<Long> categoryIds = resultEvents.stream().mapToLong(Event::getCategory).boxed().toList();
         Map<Long, CategoryDto> categoryDtoMap = categoryClient.getMap(categoryIds);
+
         List<Long> initiatorIds = resultEvents.stream().mapToLong(Event::getInitiator).boxed().toList();
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
+
         return resultEvents.stream()
                 .map(e -> EventMapper.toShortDto(e,
                         idViews.getOrDefault(e.getId(), 0L),
@@ -477,14 +532,18 @@ public class EventServiceImpl implements EventService {
             return new HashSet<>();
         }
         List<Event> eventList = eventJpaRepository.findByIdIn(eventIds);
+
         if (eventList == null || eventList.isEmpty()) {
             return new HashSet<>();
         }
         Map<Long, Long> idViews = StatsClient.getMapIdViews(eventList.stream().map(Event::getId).collect(Collectors.toList()));
+
         List<Long> categoryIds = eventList.stream().mapToLong(Event::getCategory).boxed().toList();
         Map<Long, CategoryDto> categoryDtoMap = categoryClient.getMap(categoryIds);
+
         List<Long> initiatorIds = eventList.stream().mapToLong(Event::getInitiator).boxed().toList();
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
+
         return eventList.stream()
                 .map(e -> EventMapper.toFullDto(e,
                         idViews.getOrDefault(e.getId(), 0L),
@@ -514,6 +573,7 @@ public class EventServiceImpl implements EventService {
         return updateResult;
     }
 
+
     @Transactional
     protected EventRequestStatusUpdateResult confirmAllRequests(Event event, List<RequestDto> requests, EventRequestStatusUpdateRequest updateRequest) {
         int confirmedRequestsAmount = event.getConfirmedRequests();
@@ -537,6 +597,7 @@ public class EventServiceImpl implements EventService {
         requestClient.updateAll(updateResult.getConfirmedRequests(), event.getId());
         return updateResult;
     }
+
 
     @Transactional
     protected EventRequestStatusUpdateResult confirmRequests(Event event, List<RequestDto> requests, EventRequestStatusUpdateRequest updateRequest) {

@@ -17,7 +17,6 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CommentController {
-
     final CommentService commentService;
     public static final String PUBLIC_API_PATH = "/event/{eventId}/comment";
     static final String EVENT_ID = "eventId";

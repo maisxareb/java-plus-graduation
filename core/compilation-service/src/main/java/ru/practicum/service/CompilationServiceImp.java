@@ -43,8 +43,8 @@ public class CompilationServiceImp implements CompilationService {
             Compilation compilation = createAndSaveCompilation(newCompilationDto, eventSet);
             return CompilationMapper.toDto(compilation, eventSet);
         } catch (DataAccessException e) {
-            log.error("Ошибка доступа", e);
-            throw new DataConflictException("Ошибка доступа");
+            log.error("Ошибка доступа к данным", e);
+            throw new DataConflictException("Ошибка доступа к данным");
         } catch (Exception e) {
             log.error("Ошибка базы данных", e);
             throw new DataConflictException("Ошибка базы данных");
