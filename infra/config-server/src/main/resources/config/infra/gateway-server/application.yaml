@@ -5,10 +5,36 @@ spring:
         locator:
           enabled: false
       routes:
-        - id: main_service_route
-          uri: lb://main-service
+        - id: user_service_route
+          uri: lb://user-service
           predicates:
-            - Path=/**
+            - Path=/admin/users/**
+
+        - id: category_service_route
+          uri: lb://category-service
+          predicates:
+            - Path=/admin/categories/**,/categories/**
+
+        - id: comment_service_route
+          uri: lb://comment-service
+          predicates:
+            - Path=/event/{eventId:\\d+}/comment/**
+
+        - id: compilation_service_route
+          uri: lb://compilation-service
+          predicates:
+            - Path=/admin/compilations/**,/compilations/**
+
+        - id: event_service_route
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/events/**,/users/{userId}/events/**,/events/**
+
+        - id: request_service_route
+          uri: lb://request-service
+          predicates:
+            - Path=/users/{userId}/requests/**
+
 
 server:
   port: 8080
@@ -16,7 +42,7 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      default-zone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
 
