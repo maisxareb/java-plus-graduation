@@ -1,0 +1,40 @@
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: main_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/**
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,beans,env
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.server: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
+    com.netflix.discovery: DEBUG
