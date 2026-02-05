@@ -17,7 +17,7 @@ public interface RequestMapper {
     @Mapping(target = "created", source = "created", qualifiedByName = "localDateTimeToString")
     RequestDto toRequestDto(Request request);
 
-    @Mapping(target = "created", source = "created", qualifiedByName = "stringToLocalDateTime")
+    @Mapping(target = "created", source = "dto.created", qualifiedByName = "stringToLocalDateTime")
     @Mapping(target = "event", source = "event")
     @Mapping(target = "requester", source = "user")
     Request toRequest(RequestDto dto, Long event, Long user);

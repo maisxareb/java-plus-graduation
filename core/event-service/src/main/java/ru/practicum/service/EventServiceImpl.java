@@ -75,7 +75,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventMapper.toEvent(newEventDto, category.getId(), user.getId());
         Event savedEvent = eventJpaRepository.save(event);
 
-        return eventMapper.toFullDto(savedEvent, 0, category, UserSpecialMapper.toShortDto(user));
+        return eventMapper.toFullDto(savedEvent, 0, category, UserSpecialMapper.toShortDtoStatic(user));
     }
 
     public List<EventShortDto> getEventsByCategory(Long catId) {
@@ -95,7 +95,7 @@ public class EventServiceImpl implements EventService {
                 .map(e -> eventMapper.toShortDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
                         category,
-                        UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
+                        UserSpecialMapper.toShortDtoStatic(userDtoMap.get(e.getInitiator()))))
                 .collect(Collectors.toList());
     }
 
@@ -121,14 +121,14 @@ public class EventServiceImpl implements EventService {
                 .map(e -> eventMapper.toShortDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
-                        UserSpecialMapper.toShortDto(user)))
+                        UserSpecialMapper.toShortDtoStatic(user)))
                 .collect(Collectors.toList());
     }
 
     public EventFullDto getByUserAndId(Long userId, Long eventId) {
         Event event = eventJpaRepository.findByIdAndInitiator(eventId, userId).orElseThrow(() -> new NotFoundException(String.format("События с id=%d и initiatorId=%d не найдено", eventId, userId)));
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
-        UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(userId));
+        UserShortDto userShortDto = UserSpecialMapper.toShortDtoStatic(userClient.getUser(userId));
         CategoryDto categoryDto = categoryClient.getById(event.getCategory());
         return eventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L), categoryDto, userShortDto);
     }
@@ -139,7 +139,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException(String.format("События с id=%d не найдено", eventId)));
 
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
-        UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(event.getInitiator()));
+        UserShortDto userShortDto = UserSpecialMapper.toShortDtoStatic(userClient.getUser(event.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(event.getCategory());
         return eventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L), categoryDto, userShortDto);
     }
@@ -159,7 +159,6 @@ public class EventServiceImpl implements EventService {
 
         return eventDto;
     }
-
 
     @Transactional
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
@@ -204,7 +203,6 @@ public class EventServiceImpl implements EventService {
             event.setRequestModeration(updateRequest.getRequestModeration());
         }
 
-
         String stateString = updateRequest.getStateAction();
         if (stateString != null && !stateString.isBlank()) {
             switch (StateActionUser.valueOf(stateString)) {
@@ -227,11 +225,10 @@ public class EventServiceImpl implements EventService {
         Event updatedEvent = eventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%d не найден", event.getId())));
 
-        UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(updatedEvent.getInitiator()));
+        UserShortDto userShortDto = UserSpecialMapper.toShortDtoStatic(userClient.getUser(updatedEvent.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(updatedEvent.getCategory());
         return eventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
     }
-
 
     @Transactional
     public EventFullDto updateAdminEvent(Long eventId, UpdateEventAdminRequest adminRequest) {
@@ -276,7 +273,6 @@ public class EventServiceImpl implements EventService {
             event.setRequestModeration(adminRequest.getRequestModeration());
         }
 
-
         String stateString = adminRequest.getStateAction();
         if (stateString != null && !stateString.isBlank()) {
             switch (StateActionAdmin.valueOf(stateString)) {
@@ -311,7 +307,7 @@ public class EventServiceImpl implements EventService {
         Event updatedEvent = eventJpaRepository.findById(event.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%d не найден", event.getId())));
 
-        UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(updatedEvent.getInitiator()));
+        UserShortDto userShortDto = UserSpecialMapper.toShortDtoStatic(userClient.getUser(updatedEvent.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(updatedEvent.getCategory());
         return eventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
     }
@@ -328,7 +324,7 @@ public class EventServiceImpl implements EventService {
                         event,
                         idViewsMap.getOrDefault(event.getId(), 0L),
                         categoryClient.getById(event.getCategory()),
-                        UserSpecialMapper.toShortDto(userClient.getUser(event.getInitiator()))))
+                        UserSpecialMapper.toShortDtoStatic(userClient.getUser(event.getInitiator()))))
                 .toList()
         );
     }
@@ -426,10 +422,9 @@ public class EventServiceImpl implements EventService {
                 .map(e -> eventMapper.toFullDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
-                        UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
+                        UserSpecialMapper.toShortDtoStatic(userDtoMap.get(e.getInitiator()))))
                 .collect(Collectors.toList());
     }
-
 
     @Transactional
     public List<EventShortDto> getEvents(EventParam p) {
@@ -523,7 +518,7 @@ public class EventServiceImpl implements EventService {
                 .map(e -> eventMapper.toShortDto(e,
                         idViews.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
-                        UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
+                        UserSpecialMapper.toShortDtoStatic(userDtoMap.get(e.getInitiator()))))
                 .sorted(comparator)
                 .collect(Collectors.toList());
     }
@@ -549,7 +544,7 @@ public class EventServiceImpl implements EventService {
                 .map(e -> eventMapper.toFullDto(e,
                         idViews.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
-                        UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
+                        UserSpecialMapper.toShortDtoStatic(userDtoMap.get(e.getInitiator()))))
                 .collect(Collectors.toSet());
     }
 
@@ -574,7 +569,6 @@ public class EventServiceImpl implements EventService {
         return updateResult;
     }
 
-
     @Transactional
     protected EventRequestStatusUpdateResult confirmAllRequests(Event event, List<RequestDto> requests, EventRequestStatusUpdateRequest updateRequest) {
         int confirmedRequestsAmount = event.getConfirmedRequests();
@@ -598,7 +592,6 @@ public class EventServiceImpl implements EventService {
         requestClient.updateAll(updateResult.getConfirmedRequests(), event.getId());
         return updateResult;
     }
-
 
     @Transactional
     protected EventRequestStatusUpdateResult confirmRequests(Event event, List<RequestDto> requests, EventRequestStatusUpdateRequest updateRequest) {

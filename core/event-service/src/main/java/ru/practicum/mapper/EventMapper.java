@@ -18,23 +18,24 @@ public interface EventMapper {
 
     DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    // Исправлено: source изменен на "newEventDto.eventDate"
     @Mapping(target = "createdOn", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "publishedOn", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "eventDate", source = "newEventDto.eventDate", qualifiedByName = "stringToLocalDateTime")
-    @Mapping(target = "category", source = "category")
-    @Mapping(target = "initiator", source = "user")
+    @Mapping(target = "category", source = "categoryId")
+    @Mapping(target = "initiator", source = "userId")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "state", ignore = true)
     @Mapping(target = "confirmedRequests", ignore = true)
-    Event toEvent(NewEventDto newEventDto, Long category, Long user);
+    Event toEvent(NewEventDto newEventDto, Long categoryId, Long userId);
 
+    @Mapping(target = "id", source = "event.id")
     @Mapping(target = "eventDate", source = "event.eventDate", qualifiedByName = "localDateTimeToString")
     @Mapping(target = "views", source = "views")
     @Mapping(target = "category", source = "category")
     @Mapping(target = "initiator", source = "userShortDto")
     EventShortDto toShortDto(Event event, long views, CategoryDto category, UserShortDto userShortDto);
 
+    @Mapping(target = "id", source = "event.id")
     @Mapping(target = "eventDate", source = "event.eventDate", qualifiedByName = "localDateTimeToString")
     @Mapping(target = "createdOn", source = "event.createdOn", qualifiedByName = "localDateTimeToString")
     @Mapping(target = "publishedOn", source = "event.publishedOn", qualifiedByName = "localDateTimeToString")
