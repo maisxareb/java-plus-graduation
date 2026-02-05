@@ -1,33 +1,30 @@
 package ru.practicum.mappers;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 import ru.practicum.dto.StatisticsPostResponseDto;
 import ru.practicum.model.Statistics;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class StatMapper {
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+@Mapper(componentModel = "spring")
+public interface StatMapper {
+    StatMapper INSTANCE = Mappers.getMapper(StatMapper.class);
+    DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    @Mapping(target = "timestamp", expression = "java(statistics.getTimestamp().format(TIME_FORMAT))")
+    StatisticsPostResponseDto toDto(Statistics statistics);
 
-    public static StatisticsPostResponseDto toDto(Statistics statistics) {
-        return StatisticsPostResponseDto.builder()
-                .ip(statistics.getIp())
-                .app(statistics.getApp())
-                .uri(statistics.getUri())
-                .timestamp(statistics.getTimestamp().format(TIME_FORMAT))
-                .build();
+    @Mapping(target = "timestamp", expression = "java(LocalDateTime.parse(statisticsPostResponseDto.getTimestamp(), TIME_FORMAT))")
+    Statistics fromDto(StatisticsPostResponseDto statisticsPostResponseDto);
+
+    default StatisticsPostResponseDto toDtoStatic(Statistics statistics) {
+        return toDto(statistics);
     }
 
-    public static Statistics fromDto(StatisticsPostResponseDto statisticsPostResponseDto) {
-        return Statistics.builder()
-                .uri(statisticsPostResponseDto.getUri())
-                .app(statisticsPostResponseDto.getApp())
-                .ip(statisticsPostResponseDto.getIp())
-                .timestamp(LocalDateTime.parse(statisticsPostResponseDto.getTimestamp(), TIME_FORMAT))
-                .build();
+    default Statistics fromDtoStatic(StatisticsPostResponseDto statisticsPostResponseDto) {
+        return fromDto(statisticsPostResponseDto);
     }
 }

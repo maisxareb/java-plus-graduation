@@ -1,22 +1,24 @@
 package ru.practicum.mapper;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.model.User;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserRequest;
 
-public class UserMapper {
-    public static User toUser(UserRequest userRequest) {
-        User user = new User();
-        user.setEmail(userRequest.getEmail());
-        user.setName(userRequest.getName());
-        return user;
+@Mapper(componentModel = "spring")
+public interface UserMapper {
+
+    @Mapping(target = "id", ignore = true)
+    User toUser(UserRequest userRequest);
+
+    UserDto toUserDto(User user);
+
+    default User toUserStatic(UserRequest userRequest) {
+        return toUser(userRequest);
     }
 
-    public static UserDto toUserDto(User user) {
-        UserDto userDto = new UserDto();
-        userDto.setId(user.getId());
-        userDto.setEmail(user.getEmail());
-        userDto.setName(user.getName());
-        return userDto;
+    default UserDto toUserDtoStatic(User user) {
+        return toUserDto(user);
     }
 }

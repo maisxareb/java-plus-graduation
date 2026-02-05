@@ -1,31 +1,46 @@
 package ru.practicum.mapper;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import ru.practicum.model.Request;
 import ru.practicum.request.dto.RequestDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class RequestMapper {
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+@Mapper(componentModel = "spring")
+public interface RequestMapper {
 
-    public static RequestDto toRequestDto(Request request) {
-        RequestDto dto = new RequestDto();
-        dto.setCreated(request.getCreated().format(TIME_FORMAT));
-        dto.setEvent(request.getEvent());
-        dto.setId(request.getId());
-        dto.setRequester(request.getRequester());
-        dto.setStatus(request.getStatus());
-        return dto;
+    DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    @Mapping(target = "created", source = "created", qualifiedByName = "localDateTimeToString")
+    RequestDto toRequestDto(Request request);
+
+    @Mapping(target = "created", source = "created", qualifiedByName = "stringToLocalDateTime")
+    @Mapping(target = "event", source = "event")
+    @Mapping(target = "requester", source = "user")
+    Request toRequest(RequestDto dto, Long event, Long user);
+
+    default Request toRequestForUpdate(RequestDto dto) {
+        return toRequest(dto, dto.getEvent(), dto.getRequester());
     }
 
-    public static Request toRequest(RequestDto dto, Long event, Long user) {
-        Request request = new Request();
-        request.setId(dto.getId());
-        request.setCreated(LocalDateTime.parse(dto.getCreated(), TIME_FORMAT));
-        request.setEvent(event);
-        request.setRequester(user);
-        request.setStatus(dto.getStatus());
-        return request;
+    @Named("localDateTimeToString")
+    default String localDateTimeToString(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.format(TIME_FORMAT) : null;
+    }
+
+    @Named("stringToLocalDateTime")
+    default LocalDateTime stringToLocalDateTime(String dateTimeStr) {
+        return dateTimeStr != null ? LocalDateTime.parse(dateTimeStr, TIME_FORMAT) : null;
+    }
+
+    default RequestDto toRequestDtoStatic(Request request) {
+        return toRequestDto(request);
+    }
+
+    default Request toRequestStatic(RequestDto dto, Long event, Long user) {
+        return toRequest(dto, event, user);
     }
 }

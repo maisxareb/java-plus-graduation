@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class CompilationServiceImp implements CompilationService {
     EventClient eventClient;
     CompilationRepository compilationRepository;
+    CompilationMapper compilationMapper;
     String errorMessageNotFound = "Подборка с id=%d не найдена";
 
     @Override
@@ -41,7 +42,7 @@ public class CompilationServiceImp implements CompilationService {
             validateNewCompilationDto(newCompilationDto);
             Set<EventShortDto> eventSet = getEventsForCompilation(newCompilationDto.getEvents());
             Compilation compilation = createAndSaveCompilation(newCompilationDto, eventSet);
-            return CompilationMapper.toDto(compilation, eventSet);
+            return compilationMapper.toDto(compilation, eventSet);
         } catch (DataAccessException e) {
             log.error("Ошибка доступа к данным", e);
             throw new DataConflictException("Ошибка доступа к данным");
@@ -80,7 +81,7 @@ public class CompilationServiceImp implements CompilationService {
         }
         compilation.setEvents(eventsSet.stream().mapToLong(EventShortDto::getId).boxed().collect(Collectors.toSet()));
         compilation = compilationRepository.save(compilation);
-        return CompilationMapper.toDto(compilation, eventsSet);
+        return compilationMapper.toDto(compilation, eventsSet);
     }
 
     @Override
@@ -94,7 +95,8 @@ public class CompilationServiceImp implements CompilationService {
         PageRequest page = PageRequest.of(from / size, size, Sort.by("id").ascending());
         List<Compilation> compilations = compilationRepository.findByPinned(pinned, page);
         return compilations.stream()
-                .map(compilation -> CompilationMapper.toDto(compilation, eventClient.getEventsByIds(compilation.getEvents())))
+                .map(compilation -> compilationMapper.toDto(compilation,
+                        eventClient.getEventsByIds(compilation.getEvents())))
                 .collect(Collectors.toList());
     }
 
@@ -105,7 +107,7 @@ public class CompilationServiceImp implements CompilationService {
         }
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, compId)));
-        return CompilationMapper.toDto(compilation, eventClient.getEventsByIds(compilation.getEvents()));
+        return compilationMapper.toDto(compilation, eventClient.getEventsByIds(compilation.getEvents()));
     }
 
     private void validateNewCompilationDto(NewCompilationDto newCompilationDto) {
@@ -126,7 +128,7 @@ public class CompilationServiceImp implements CompilationService {
     }
 
     private Compilation createAndSaveCompilation(NewCompilationDto newCompilationDto, Set<EventShortDto> events) {
-        Compilation compilation = CompilationMapper.toEntity(newCompilationDto, events);
+        Compilation compilation = compilationMapper.toEntity(newCompilationDto, events);
         validateCompilationBeforeSave(compilation);
         return compilationRepository.save(compilation);
     }

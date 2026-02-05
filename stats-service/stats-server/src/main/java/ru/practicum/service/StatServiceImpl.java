@@ -17,12 +17,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatServiceImpl implements StatService {
     private final StatisticsRepository statisticsRepository;
+    private final StatMapper statMapper;
 
     @Transactional
     @Override
     public StatisticsPostResponseDto hit(StatisticsPostResponseDto statisticsPostResponseDto) {
-        Statistics statistics = StatMapper.fromDto(statisticsPostResponseDto);
-        return StatMapper.toDto(statisticsRepository.save(statistics));
+        Statistics statistics = statMapper.fromDto(statisticsPostResponseDto);
+        return statMapper.toDto(statisticsRepository.save(statistics));
     }
 
     @Transactional

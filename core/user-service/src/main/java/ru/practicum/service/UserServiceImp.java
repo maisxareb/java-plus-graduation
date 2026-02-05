@@ -28,6 +28,7 @@ public class UserServiceImp implements UserService {
     private final CommentClient commentClient;
     private final RequestClient requestClient;
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public UserDto addUser(UserRequest userRequest) {
@@ -36,8 +37,8 @@ public class UserServiceImp implements UserService {
         if (currentUser != null) {
             throw new ConflictException("Пользователь уже существует");
         }
-        User newUser = userRepository.save(UserMapper.toUser(userRequest));
-        return UserMapper.toUserDto(newUser);
+        User newUser = userRepository.save(userMapper.toUser(userRequest));
+        return userMapper.toUserDto(newUser);
     }
 
     @Override
@@ -63,7 +64,7 @@ public class UserServiceImp implements UserService {
         }
 
         return users.stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
@@ -82,7 +83,7 @@ public class UserServiceImp implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%d не найден", userId)));
 
-        return UserMapper.toUserDto(user);
+        return userMapper.toUserDto(user);
     }
 
     @Override
@@ -94,7 +95,7 @@ public class UserServiceImp implements UserService {
             users = userRepository.findAllByIdIn(ids);
         }
         return users.stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::toUserDto) // Используем маппер
                 .collect(Collectors.toMap(UserDto::getId, userDto -> userDto));
     }
 }

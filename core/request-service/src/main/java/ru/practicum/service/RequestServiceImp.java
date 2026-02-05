@@ -32,21 +32,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Transactional(readOnly = true)
 public class RequestServiceImp implements RequestService {
 
     EntityManager entityManager;
     RequestRepository repository;
     EventClient eventClient;
     UserClient userClient;
-
+    RequestMapper requestMapper;
 
     @Override
     public List<RequestDto> getAll(Long userId) {
         UserDto userDto = userClient.getUser(userId);
-        return repository.findByRequester(userId).stream().map(RequestMapper::toRequestDto).toList();
+        return repository.findByRequester(userId).stream()
+                .map(requestMapper::toRequestDto)
+                .toList();
     }
 
     @Override
+    @Transactional
     public RequestDto create(Long userId, Long eventId) {
         UserDto requestor = userClient.getUser(userId);
 
@@ -54,22 +58,27 @@ public class RequestServiceImp implements RequestService {
         if (duplicatedRequest.isPresent()) {
             throw new CreateConditionException(String.format("Запрос от пользователя id = %d на событие c id = %d уже существует", userId, eventId));
         }
+
         EventFullDto event = eventClient.getEvent(eventId);
         if (event.getInitiator().getId() == userId) {
             throw new CreateConditionException("Пользователь не может создавать запрос на участие в своем событии");
         }
+
         if (event.getState() != EventState.PUBLISHED) {
             throw new CreateConditionException(String.format("Событие с id = %d не опубликовано", eventId));
         }
+
         if (event.getParticipantLimit() != 0) {
             if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
                 throw new CreateConditionException(String.format("У события с id = %d достигнут лимит участников %d", eventId, event.getParticipantLimit()));
             }
         }
+
         Request request = new Request();
         request.setRequester(requestor.getId());
         request.setEvent(event.getId());
         request.setCreated(LocalDateTime.now());
+
         if ((event.getParticipantLimit() == 0) || (!event.isRequestModeration())) {
             request.setStatus(RequestStatus.CONFIRMED);
             int confirmedRequestsAmount = event.getConfirmedRequests();
@@ -79,17 +88,22 @@ public class RequestServiceImp implements RequestService {
         } else {
             request.setStatus(RequestStatus.PENDING);
         }
-        return RequestMapper.toRequestDto(repository.save(request));
+
+        return requestMapper.toRequestDto(repository.save(request));
     }
 
     @Override
+    @Transactional
     public RequestDto cancelRequest(Long userId, Long requestId) {
         UserDto user = userClient.getUser(userId);
-        Request request = repository.findById(requestId).orElseThrow(() -> new NotFoundException(String.format("Запрос с id = %d не найден", requestId)));
+        Request request = repository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException(String.format("Запрос с id = %d не найден", requestId)));
+
         repository.updateToCanceled(requestId);
         repository.flush();
         entityManager.clear();
-        return RequestMapper.toRequestDto(repository.findById(requestId).get());
+
+        return requestMapper.toRequestDto(repository.findById(requestId).get());
     }
 
     @Override
@@ -102,13 +116,15 @@ public class RequestServiceImp implements RequestService {
         if (partRequests == null || partRequests.isEmpty()) {
             return new ArrayList<>();
         }
+
         return partRequests.stream()
-                .map(RequestMapper::toRequestDto)
+                .map(requestMapper::toRequestDto)
                 .collect(Collectors.toList());
     }
 
+    @Override
     @Transactional
-    public void updateAll(List<RequestDto> requestDtoList, Long event) {
+    public void updateAll(List<RequestDto> requestDtoList, Long eventId) {
         List<Long> userIds = requestDtoList.stream()
                 .map(RequestDto::getRequester)
                 .collect(Collectors.toList());
@@ -121,27 +137,30 @@ public class RequestServiceImp implements RequestService {
                 .collect(Collectors.toMap(RequestDto::getId, pr -> users.get(pr.getRequester())));
 
         List<Request> prList = requestDtoList.stream()
-                .map(pr -> RequestMapper.toRequest(pr, event, pr.getId()))
+                .map(pr -> requestMapper.toRequest(pr, eventId, pr.getId()))
                 .toList();
 
         repository.saveAll(prList);
     }
 
+    @Override
     @Transactional
     public void update(RequestDto prDto, Long event) {
         UserDto user = userClient.getUser(prDto.getRequester());
-        repository.save(RequestMapper.toRequest(prDto, event, user.getId()));
+        repository.save(requestMapper.toRequest(prDto, event, user.getId()));
     }
 
     @Override
+    @Transactional
     public void deleteAllWithUser(Long userId) {
         List<Request> requestsForDelete = repository.findByRequester(userId);
-        requestsForDelete.forEach(request -> repository.deleteById(request.getId()));
+        repository.deleteAll(requestsForDelete);
     }
 
     @Override
+    @Transactional
     public void deleteAllWithEvent(Long eventId) {
         List<Request> requestsForDelete = repository.findAllByEventId(eventId);
-        requestsForDelete.forEach(request -> repository.deleteById(request.getId()));
+        repository.deleteAll(requestsForDelete);
     }
 }

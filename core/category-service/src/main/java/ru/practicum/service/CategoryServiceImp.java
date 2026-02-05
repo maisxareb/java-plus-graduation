@@ -28,6 +28,7 @@ public class CategoryServiceImp implements CategoryService {
 
     CategoryRepository repository;
     EventClient eventClient;
+    CategoryMapper categoryMapper;
     String errorMessageNotFound = "Категория с id = %d не найдена";
     String errorMessageAlreadyExist = "Категория с именем = %s уже существует";
 
@@ -35,7 +36,9 @@ public class CategoryServiceImp implements CategoryService {
     public List<CategoryDto> getAll(Integer from, Integer size) {
         PageRequest page = PageRequest.of(from, size, Sort.by("id").ascending());
         List<Category> categories = repository.findAll(page).getContent();
-        return categories.stream().map(CategoryMapper::toCategoryDto).toList();
+        return categories.stream()
+                .map(categoryMapper::toCategoryDto)
+                .toList();
     }
 
     @Override
@@ -43,7 +46,7 @@ public class CategoryServiceImp implements CategoryService {
         Category category = repository.findById(categoryId).orElseThrow(() ->
                 new NotFoundException(String.format(errorMessageNotFound, categoryId))
         );
-        return CategoryMapper.toCategoryDto(category);
+        return categoryMapper.toCategoryDto(category);
     }
 
     @Override
@@ -51,7 +54,9 @@ public class CategoryServiceImp implements CategoryService {
         if (repository.findAll().stream().map(Category::getName).anyMatch(name -> name.equals(categoryRequest.getName()))) {
             throw new ConstraintException(String.format(errorMessageAlreadyExist, categoryRequest.getName()));
         }
-        return CategoryMapper.toCategoryDto(repository.save(CategoryMapper.toCategory(categoryRequest)));
+        Category category = categoryMapper.toCategory(categoryRequest);
+        Category savedCategory = repository.save(category);
+        return categoryMapper.toCategoryDto(savedCategory);
     }
 
     @Override
@@ -64,7 +69,8 @@ public class CategoryServiceImp implements CategoryService {
             throw new ConflictException(String.format(errorMessageAlreadyExist, categoryRequest.getName()));
         }
         category.setName(categoryRequest.getName());
-        return CategoryMapper.toCategoryDto(repository.save(category));
+        Category updatedCategory = repository.save(category);
+        return categoryMapper.toCategoryDto(updatedCategory);
     }
 
     @Override
@@ -81,6 +87,10 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public Map<Long, CategoryDto> getMap(List<Long> ids) {
         List<Category> categories = repository.findAllByIdIn(ids);
-        return categories.stream().collect(Collectors.toMap(Category::getId, CategoryMapper::toCategoryDto));
+        return categories.stream()
+                .collect(Collectors.toMap(
+                        Category::getId,
+                        categoryMapper::toCategoryDto
+                ));
     }
 }

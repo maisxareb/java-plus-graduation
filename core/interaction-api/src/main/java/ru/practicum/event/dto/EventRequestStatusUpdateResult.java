@@ -1,8 +1,6 @@
 package ru.practicum.event.dto;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.request.dto.RequestDto;
 
@@ -11,6 +9,8 @@ import java.util.List;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventRequestStatusUpdateResult {
     List<RequestDto> confirmedRequests = new ArrayList<>();

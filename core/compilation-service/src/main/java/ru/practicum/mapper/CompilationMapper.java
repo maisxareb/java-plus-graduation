@@ -1,5 +1,6 @@
 package ru.practicum.mapper;
 
+import org.mapstruct.*;
 import ru.practicum.compilation.dto.CompilationDto;
 import ru.practicum.compilation.dto.NewCompilationDto;
 import ru.practicum.event.dto.EventShortDto;
@@ -8,26 +9,31 @@ import ru.practicum.model.Compilation;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CompilationMapper {
+@Mapper(componentModel = "spring")
+public interface CompilationMapper {
 
-    public static CompilationDto toDto(Compilation compilation, Set<EventShortDto> eventShortDtoSet) {
-        CompilationDto compilationDto = new CompilationDto();
-        compilationDto.setId(compilation.getId());
-        compilationDto.setPinned(compilation.isPinned());
-        compilationDto.setTitle(compilation.getTitle());
+    @Mapping(target = "events", source = "eventShortDtoSet", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    CompilationDto toDto(Compilation compilation, Set<EventShortDto> eventShortDtoSet);
 
-        if (eventShortDtoSet == null || eventShortDtoSet.isEmpty()) {
-            return compilationDto;
+    @Mapping(target = "events", source = "events", qualifiedByName = "eventSetToLongSet")
+    Compilation toEntity(NewCompilationDto newCompilationDto, Set<EventShortDto> events);
+
+    @Named("eventSetToLongSet")
+    static Set<Long> eventSetToLongSet(Set<EventShortDto> events) {
+        if (events == null) {
+            return Set.of();
         }
-        compilationDto.setEvents(eventShortDtoSet);
-        return compilationDto;
+        return events.stream()
+                .map(EventShortDto::getId)
+                .collect(Collectors.toSet());
     }
 
-    public static Compilation toEntity(NewCompilationDto newCompilationDto, Set<EventShortDto> events) {
-        Compilation compilation = new Compilation();
-        compilation.setTitle(newCompilationDto.getTitle());
-        compilation.setEvents(events.stream().mapToLong(EventShortDto::getId).boxed().collect(Collectors.toSet()));
-        compilation.setPinned(newCompilationDto.isPinned());
-        return compilation;
+    @AfterMapping
+    default void afterMapping(@MappingTarget Compilation compilation, Set<EventShortDto> events) {
+        if (events != null && !events.isEmpty()) {
+            compilation.setEvents(events.stream()
+                    .map(EventShortDto::getId)
+                    .collect(Collectors.toSet()));
+        }
     }
 }

@@ -1,9 +1,7 @@
 package ru.practicum.compilation.dto;
 
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.lang.Nullable;
 
@@ -11,6 +9,8 @@ import java.util.Set;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateCompilationRequest {
     Set<Long> events;

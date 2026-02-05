@@ -56,6 +56,7 @@ public class EventServiceImpl implements EventService {
     CommentClient commentClient;
     CompilationClient compilationClient;
     EntityManager entityManager;
+    EventMapper eventMapper;
 
     @Transactional
     @Override
@@ -71,10 +72,10 @@ public class EventServiceImpl implements EventService {
         if (newEventDto.getDescription().trim().isEmpty() || newEventDto.getAnnotation().trim().isEmpty() || newEventDto.getParticipantLimit() < 0) {
             throw new ValidationException("Описание пустое");
         }
-        Event event = EventMapper.toEvent(newEventDto, category.getId(), user.getId());
+        Event event = eventMapper.toEvent(newEventDto, category.getId(), user.getId());
         Event savedEvent = eventJpaRepository.save(event);
 
-        return EventMapper.toFullDto(savedEvent, 0, category, UserSpecialMapper.toShortDto(user));
+        return eventMapper.toFullDto(savedEvent, 0, category, UserSpecialMapper.toShortDto(user));
     }
 
     public List<EventShortDto> getEventsByCategory(Long catId) {
@@ -91,7 +92,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
 
         return events.stream()
-                .map(e -> EventMapper.toShortDto(e,
+                .map(e -> eventMapper.toShortDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
                         category,
                         UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
@@ -117,7 +118,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, CategoryDto> categoryDtoMap = categoryClient.getMap(categoryIds);
 
         return events.stream()
-                .map(e -> EventMapper.toShortDto(e,
+                .map(e -> eventMapper.toShortDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
                         UserSpecialMapper.toShortDto(user)))
@@ -129,7 +130,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(userId));
         CategoryDto categoryDto = categoryClient.getById(event.getCategory());
-        return EventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L), categoryDto, userShortDto);
+        return eventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L), categoryDto, userShortDto);
     }
 
     @Override
@@ -140,7 +141,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(List.of(event.getId()));
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(event.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(event.getCategory());
-        return EventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L), categoryDto, userShortDto);
+        return eventMapper.toFullDto(event, idViewsMap.getOrDefault(event.getId(), 0L), categoryDto, userShortDto);
     }
 
     public EventFullDto getEvent(Long eventId, HttpServletRequest request) {
@@ -228,7 +229,7 @@ public class EventServiceImpl implements EventService {
 
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(updatedEvent.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(updatedEvent.getCategory());
-        return EventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
+        return eventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
     }
 
 
@@ -312,7 +313,7 @@ public class EventServiceImpl implements EventService {
 
         UserShortDto userShortDto = UserSpecialMapper.toShortDto(userClient.getUser(updatedEvent.getInitiator()));
         CategoryDto categoryDto = categoryClient.getById(updatedEvent.getCategory());
-        return EventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
+        return eventMapper.toFullDto(updatedEvent, idViewsMap.getOrDefault(updatedEvent.getId(), 0L), categoryDto, userShortDto);
     }
 
     @Override
@@ -323,7 +324,7 @@ public class EventServiceImpl implements EventService {
 
         List<Event> eventList = eventJpaRepository.findEventsByIdSet(eventIds);
         Map<Long, Long> idViewsMap = StatsClient.getMapIdViews(eventList.stream().map(Event::getId).collect(Collectors.toList()));
-        return new HashSet<>(eventList.stream().map(event -> EventMapper.toShortDto(
+        return new HashSet<>(eventList.stream().map(event -> eventMapper.toShortDto(
                         event,
                         idViewsMap.getOrDefault(event.getId(), 0L),
                         categoryClient.getById(event.getCategory()),
@@ -422,7 +423,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
 
         return resultEvents.stream()
-                .map(e -> EventMapper.toFullDto(e,
+                .map(e -> eventMapper.toFullDto(e,
                         idViewsMap.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
                         UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
@@ -519,7 +520,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
 
         return resultEvents.stream()
-                .map(e -> EventMapper.toShortDto(e,
+                .map(e -> eventMapper.toShortDto(e,
                         idViews.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
                         UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))
@@ -545,7 +546,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, UserDto> userDtoMap = userClient.getMapOfUsers(initiatorIds);
 
         return eventList.stream()
-                .map(e -> EventMapper.toFullDto(e,
+                .map(e -> eventMapper.toFullDto(e,
                         idViews.getOrDefault(e.getId(), 0L),
                         categoryDtoMap.get(e.getCategory()),
                         UserSpecialMapper.toShortDto(userDtoMap.get(e.getInitiator()))))

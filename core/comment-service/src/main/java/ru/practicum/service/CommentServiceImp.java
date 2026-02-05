@@ -17,7 +17,6 @@ import ru.practicum.repository.CommentRepository;
 import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.UserDto;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +28,7 @@ public class CommentServiceImp implements CommentService {
     UserClient userClient;
     EventClient eventClient;
     CommentRepository commentRepository;
+    CommentMapper commentMapper;
     String errorMessageNotFound = "Комментарий с id = %d не найден";
     String errorMessageNotAuthor = "Только автор c id = %d может редактировать комментарий";
 
@@ -38,27 +38,26 @@ public class CommentServiceImp implements CommentService {
         UserDto user = userClient.getUser(userId);
         EventFullDto event = eventClient.getEvent(eventId);
 
-        Comment comment = new Comment();
-        comment.setText(commentRequest.getText());
-        comment.setCreated(LocalDateTime.now());
-        comment.setAuthor(user.getId());
-        comment.setEvent(event.getId());
+        Comment comment = commentMapper.toComment(commentRequest, user.getId(), event.getId());
 
         Comment newComment = commentRepository.save(comment);
-        return CommentMapper.toCommentResponse(newComment);
+        return commentMapper.toCommentResponse(newComment);
     }
 
     @Override
     @Transactional
     public CommentResponse updateComment(Long userId, Long commentId, CommentRequest commentRequest) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, commentId)));
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, commentId)));
+
         UserDto user = userClient.getUser(userId);
         if (!comment.getAuthor().equals(userId)) {
             throw new ConflictException(String.format(errorMessageNotAuthor, comment.getAuthor()));
         }
+
         comment.setText(commentRequest.getText());
         Comment updatedComment = commentRepository.save(comment);
-        return CommentMapper.toCommentResponse(updatedComment);
+        return commentMapper.toCommentResponse(updatedComment);
     }
 
     @Override
@@ -66,7 +65,7 @@ public class CommentServiceImp implements CommentService {
         EventFullDto eventFullDto = eventClient.getEvent(eventId);
 
         return commentRepository.findAllByEventOrderByCreatedAsc(eventId).stream()
-                .map(CommentMapper::toCommentResponse)
+                .map(commentMapper::toCommentResponse)
                 .collect(Collectors.toList());
     }
 
@@ -77,11 +76,14 @@ public class CommentServiceImp implements CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, commentId)));
 
-        if (!(comment.getEvent().equals(eventId))) {
-            throw new NotFoundException(String.format("Комментарий с id = %d не принадлежит указанному событию  с id = %d", commentId, eventId));
+        if (!comment.getEvent().equals(eventId)) {
+            throw new NotFoundException(String.format(
+                    "Комментарий с id = %d не принадлежит указанному событию с id = %d",
+                    commentId, eventId
+            ));
         }
 
-        return CommentMapper.toCommentResponse(comment);
+        return commentMapper.toCommentResponse(comment);
     }
 
     @Override
@@ -90,21 +92,31 @@ public class CommentServiceImp implements CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, commentId)));
 
-        if (!(comment.getAuthor().equals(userId))) {
+        if (!comment.getAuthor().equals(userId)) {
             throw new ConflictException(String.format(errorMessageNotAuthor, comment.getAuthor()));
         }
         commentRepository.deleteById(commentId);
     }
 
     @Override
+    @Transactional
     public void deleteCommentsForUser(Long userId) {
-        List<Comment> commentsForDelete = commentRepository.findAllByAuthor(userId);
-        commentsForDelete.forEach(comment -> commentRepository.deleteById(comment.getId()));
+        List<Long> commentIds = commentRepository.findIdsByAuthor(userId);
+
+        if (!commentIds.isEmpty()) {
+            List<Comment> comments = commentRepository.findAllById(commentIds);
+            commentRepository.deleteAll(comments);
+        }
     }
 
     @Override
+    @Transactional
     public void deleteCommentsForEvent(Long eventId) {
-        List<Comment> commentsForDelete = commentRepository.findAllByEventOrderByCreatedAsc(eventId);
-        commentsForDelete.forEach(comment -> commentRepository.deleteById(comment.getId()));
+        List<Long> commentIds = commentRepository.findIdsByEvent(eventId);
+
+        if (!commentIds.isEmpty()) {
+            List<Comment> comments = commentRepository.findAllById(commentIds);
+            commentRepository.deleteAll(comments);
+        }
     }
 }

@@ -2,7 +2,6 @@ package ru.practicum.model;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
@@ -10,8 +9,8 @@ import ru.practicum.event.dto.EventState;
 import ru.practicum.event.dto.Location;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-@EqualsAndHashCode
 @Getter
 @Setter
 @Entity
@@ -47,7 +46,6 @@ public class Event {
     @AttributeOverrides({
             @AttributeOverride(name = "lat", column = @Column(name = "location_lat")),
             @AttributeOverride(name = "lon", column = @Column(name = "location_lon"))})
-    @Column(name = "location")
     Location location;
 
     @Column(name = "paid")
@@ -68,4 +66,25 @@ public class Event {
 
     @Column(name = "title", length = 300)
     String title;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Event event = (Event) o;
+
+        if (id == null && event.id == null) {
+            return false;
+        }
+
+        return Objects.equals(id, event.id);
+    }
+
+    @Override
+    public int hashCode() {
+        if (id == null) {
+            return System.identityHashCode(this);
+        }
+        return Objects.hash(id);
+    }
 }
