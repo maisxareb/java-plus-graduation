@@ -18,9 +18,10 @@ public interface EventMapper {
 
     DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    // Исправлено: source изменен на "newEventDto.eventDate"
     @Mapping(target = "createdOn", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "publishedOn", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "eventDate", source = "eventDate", qualifiedByName = "stringToLocalDateTime")
+    @Mapping(target = "eventDate", source = "newEventDto.eventDate", qualifiedByName = "stringToLocalDateTime")
     @Mapping(target = "category", source = "category")
     @Mapping(target = "initiator", source = "user")
     @Mapping(target = "id", ignore = true)
