@@ -9,7 +9,7 @@ import ru.practicum.model.Statistics;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = {LocalDateTime.class})
 public interface StatMapper {
     StatMapper INSTANCE = Mappers.getMapper(StatMapper.class);
     DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
