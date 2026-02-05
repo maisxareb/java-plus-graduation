@@ -9,7 +9,6 @@ import org.hibernate.validator.constraints.Length;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CategoryRequest {
     @NotBlank(message = "Поле: name. Ошибка: не должно быть пустым. Значение: null")
