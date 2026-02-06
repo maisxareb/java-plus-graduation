@@ -9,7 +9,6 @@ import ru.practicum.event.dto.EventState;
 import ru.practicum.event.dto.Location;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Getter
 @Setter
@@ -66,25 +65,4 @@ public class Event {
 
     @Column(name = "title", length = 300)
     String title;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Event event = (Event) o;
-
-        if (id == null && event.id == null) {
-            return false;
-        }
-
-        return Objects.equals(id, event.id);
-    }
-
-    @Override
-    public int hashCode() {
-        if (id == null) {
-            return System.identityHashCode(this);
-        }
-        return Objects.hash(id);
-    }
 }

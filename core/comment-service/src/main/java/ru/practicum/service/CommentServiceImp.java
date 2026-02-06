@@ -50,7 +50,8 @@ public class CommentServiceImp implements CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, commentId)));
 
-        UserDto user = userClient.getUser(userId);
+        userClient.getUser(userId);
+
         if (!comment.getAuthor().equals(userId)) {
             throw new ConflictException(String.format(errorMessageNotAuthor, comment.getAuthor()));
         }
@@ -62,7 +63,7 @@ public class CommentServiceImp implements CommentService {
 
     @Override
     public List<CommentResponse> getCommentsByEvent(Long eventId) {
-        EventFullDto eventFullDto = eventClient.getEvent(eventId);
+        eventClient.getEvent(eventId);
 
         return commentRepository.findAllByEventOrderByCreatedAsc(eventId).stream()
                 .map(commentMapper::toCommentResponse)
@@ -71,7 +72,7 @@ public class CommentServiceImp implements CommentService {
 
     @Override
     public CommentResponse getCommentById(Long eventId, Long commentId) {
-        EventFullDto eventFullDto = eventClient.getEvent(eventId);
+        eventClient.getEvent(eventId);
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException(String.format(errorMessageNotFound, commentId)));

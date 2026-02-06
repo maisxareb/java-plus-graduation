@@ -43,7 +43,7 @@ public class RequestServiceImp implements RequestService {
 
     @Override
     public List<RequestDto> getAll(Long userId) {
-        UserDto userDto = userClient.getUser(userId);
+        userClient.getUser(userId);
         return repository.findByRequester(userId).stream()
                 .map(requestMapper::toRequestDto)
                 .toList();
@@ -95,8 +95,9 @@ public class RequestServiceImp implements RequestService {
     @Override
     @Transactional
     public RequestDto cancelRequest(Long userId, Long requestId) {
-        UserDto user = userClient.getUser(userId);
-        Request request = repository.findById(requestId)
+        userClient.getUser(userId);
+
+        repository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException(String.format("Запрос с id = %d не найден", requestId)));
 
         repository.updateToCanceled(requestId);
@@ -130,12 +131,6 @@ public class RequestServiceImp implements RequestService {
                 .collect(Collectors.toList());
         Map<Long, UserDto> users = userClient.getMapOfUsers(userIds);
 
-        Map<Long, RequestDto> prDtoMap = requestDtoList.stream()
-                .collect(Collectors.toMap(RequestDto::getId, e -> e));
-
-        Map<Long, UserDto> requestUserMap = requestDtoList.stream()
-                .collect(Collectors.toMap(RequestDto::getId, pr -> users.get(pr.getRequester())));
-
         List<Request> prList = requestDtoList.stream()
                 .map(pr -> requestMapper.toRequest(pr, eventId, pr.getId()))
                 .toList();
@@ -146,8 +141,9 @@ public class RequestServiceImp implements RequestService {
     @Override
     @Transactional
     public void update(RequestDto prDto, Long event) {
-        UserDto user = userClient.getUser(prDto.getRequester());
-        repository.save(requestMapper.toRequest(prDto, event, user.getId()));
+        userClient.getUser(prDto.getRequester());
+
+        repository.save(requestMapper.toRequest(prDto, event, prDto.getRequester()));
     }
 
     @Override

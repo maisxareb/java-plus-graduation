@@ -13,7 +13,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException e) {
         return new ErrorResponse(
-                "NOT_FOUND",
+                HttpStatus.NOT_FOUND.toString(),
                 "The required object was not found.",
                 e.getMessage()
         );
@@ -23,7 +23,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(ValidationException e) {
         return new ErrorResponse(
-                "BAD_REQUEST",
+                HttpStatus.BAD_REQUEST.toString(),
                 "Incorrectly made request.",
                 e.getMessage()
         );
@@ -33,7 +33,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleConstraintException(final RuntimeException e) {
         return new ErrorResponse(
-                "FORBIDDEN",
+                HttpStatus.CONFLICT.toString(),
                 "For the requested operation the conditions are not met.",
                 e.getMessage()
         );
