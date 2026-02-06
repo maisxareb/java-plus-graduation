@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
-  # Существующие базы данных
-  stats-db:
+
+  stats-service-db:
     image: postgres:16.1
-    container_name: stats
+    container_name: stats_service
     ports:
       - "5433:5432"
     environment:
@@ -12,80 +10,63 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
-  main-db:
+
+  event-service-db:
     image: postgres:16.1
-    container_name: main
+    container_name: event_service
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=main
+      - POSTGRES_DB=event
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
-  # Discovery Server (Eureka)
-  discovery-server:
-    image: openjdk:21-jdk-slim
-    container_name: discovery-server
+  user-service-db:
+    image: postgres:16.1
+    container_name: user_service
     ports:
-      - "8761:8761"
-    volumes:
-      - ./infra/discovery-server/target/discovery-server-0.0.1-SNAPSHOT.jar:/app.jar
-    command: java -jar /app.jar
-    depends_on:
-      - main-db
-      - stats-db
-
-  # Config Server
-  config-server:
-    image: openjdk:21-jdk-slim
-    container_name: config-server
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./infra/config-server/target/config-server-0.0.1-SNAPSHOT.jar:/app.jar
-    command: java -jar /app.jar
-    depends_on:
-      - discovery-server
-
-  # Gateway Server
-  gateway-server:
-    image: openjdk:21-jdk-slim
-    container_name: gateway-server
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./infra/gateway-server/target/gateway-server-0.0.1-SNAPSHOT.jar:/app.jar
-    command: java -jar /app.jar
-    depends_on:
-      - config-server
-
-  # Stats Server
-  stats-server:
-    image: openjdk:21-jdk-slim
-    container_name: stats-server
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./stats-service/stats-server/target/stats-server-0.0.1-SNAPSHOT.jar:/app.jar
+      - "5434:5432"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats
-    command: java -jar /app.jar
-    depends_on:
-      - config-server
-      - stats-db
+      - POSTGRES_DB=user
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
 
-  # Main Service
-  main-service:
-    image: openjdk:21-jdk-slim
-    container_name: main-service
+  category-service-db:
+    image: postgres:16.1
+    container_name: category_service
     ports:
-      - "8081:8081"
-    volumes:
-      - ./core/main-service/target/main-service-0.0.1-SNAPSHOT.jar:/app.jar
+      - "5435:5432"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://main-db:5432/main
-    command: java -jar /app.jar
-    depends_on:
-      - config-server
-      - main-db
-      - stats-server
+      - POSTGRES_DB=category
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  comment-service-db:
+    image: postgres:16.1
+    container_name: comment_service
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_DB=comment
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  compilation-service-db:
+    image: postgres:16.1
+    container_name: compilation_service
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_DB=compilation
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  request-service-db:
+    image: postgres:16.1
+    container_name: request_service
+    ports:
+      - "5438:5432"
+    environment:
+      - POSTGRES_DB=request
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres

@@ -31,6 +31,37 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
+				<groupId>io.github.openfeign</groupId>
+				<artifactId>feign-httpclient</artifactId>
+				<version>13.5</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>2.10.1</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.h2database</groupId>
+				<artifactId>h2</artifactId>
+				<version>2.2.224</version>
+				<scope>runtime</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-starter-openfeign</artifactId>
+				<version>4.1.2</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.zalando</groupId>
+				<artifactId>logbook-spring-boot-starter</artifactId>
+				<version>3.7.2</version>
+			</dependency>
+
+			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
 				<version>2023.0.3</version>

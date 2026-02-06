@@ -1,9 +1,7 @@
 server:
-  port: 0  # Автоматический выбор порта
+  port: 0
 
 spring:
-  application:
-    name: stats-server  # Добавлено имя приложения
   sql:
     init:
       mode: always
@@ -12,17 +10,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    hibernate:
-      ddl-auto: update
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5433/stats
     username: postgres
     password: postgres
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
 
 logging:
   level:
@@ -33,39 +25,11 @@ logging:
             JpaTransactionManager: DEBUG
         transaction:
           interceptor: TRACE
-      hibernate:
-        SQL: DEBUG
-        type.descriptor.sql: TRACE
       zalando:
         logbook: TRACE
 
-# Конфигурация Eureka
+
 eureka:
   client:
     service-url:
       default-zone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-    registry-fetch-interval-seconds: 5
-  instance:
-    prefer-ip-address: true  # Использовать IP вместо hostname
-    hostname: localhost
-    instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
-    lease-renewal-interval-in-seconds: 10  # Интервал обновления лизинга
-    lease-expiration-duration-in-seconds: 30  # Время до истечения лизинга
-    metadata-map:
-      zone: primary
-    status-page-url-path: /actuator/info
-    health-check-url-path: /actuator/health
-
-# Actuator для мониторинга
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
-    metrics:
-      enabled: true
