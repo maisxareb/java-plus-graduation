@@ -16,7 +16,7 @@ spring:
 
   logging:
     level:
-      ru.practicum.ewm: DEBUG
+      ru.practicum: DEBUG
 
 analyzer:
   kafka:
@@ -24,14 +24,14 @@ analyzer:
       bootstrap.servers: localhost:9092
       group.id: "analyzer-group"
       key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
-      value.deserializer: ru.practicum.ewm.analyzer.stats.avro.UserActionDeserializer
+      value.deserializer: ru.practicum.analyzer.stats.avro.UserActionDeserializer
       enable.auto.commit: "false"
       auto.offset.reset: "earliest"
     event-similarity-consumer-props:
       bootstrap.servers: localhost:9092
       group.id: "analyzer-group"
       key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
-      value.deserializer: ru.practicum.ewm.analyzer.stats.avro.EventSimilarityDeserializer
+      value.deserializer: ru.practicum.analyzer.stats.avro.EventSimilarityDeserializer
       enable.auto.commit: "false"
       auto.offset.reset: "earliest"
     user-actions-topic: stats.user-actions.v1

@@ -16,7 +16,7 @@ spring:
 
   logging:
     level:
-      ru.practicum.ewm: DEBUG
+      ru.practicum: DEBUG
 
 grpc:
   client:

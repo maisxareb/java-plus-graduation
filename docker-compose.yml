@@ -1,7 +1,7 @@
 services:
   stats-db:
     image: postgres:16.1
-    container_name: ewm-stats-db
+    container_name: stats-db
     ports:
       - "6432:5432"
     environment:
@@ -17,7 +17,7 @@ services:
 
   event-db:
     image: postgres:16.1
-    container_name: ewm-event-db
+    container_name: event-db
     ports:
       - "4432:5432"
     environment:
@@ -33,7 +33,7 @@ services:
 
   user-db:
     image: postgres:16.1
-    container_name: ewm-user-db
+    container_name: user-db
     ports:
       - "4433:5432"
     environment:
@@ -49,7 +49,7 @@ services:
 
   request-db:
     image: postgres:16.1
-    container_name: ewm-request-db
+    container_name: request-db
     ports:
       - "4434:5432"
     environment:
@@ -65,7 +65,7 @@ services:
 
   comment-db:
     image: postgres:16.1
-    container_name: ewm-comment-db
+    container_name: comment-db
     ports:
       - "4435:5432"
     environment:
