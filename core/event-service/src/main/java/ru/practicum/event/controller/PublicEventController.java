@@ -23,7 +23,7 @@ import java.util.List;
 @RequestMapping("/events")
 public class PublicEventController {
 
-    private static final String USER_ID_HEADER = "X-USER-ID";
+    private static final String USER_ID_HEADER = "X-EWM-USER-ID";
     private final EventService eventService;
 
     @GetMapping("/{eventId}")

@@ -49,6 +49,10 @@ public class CollectorClient {
 
     private void sendAction(Long userId, Long eventId, ActionTypeProto actionType) {
         try {
+            if (eventId == null) {
+                eventId = 0L;
+            }
+
             Instant now = Instant.now();
 
             UserActionProto userAction = UserActionProto.newBuilder()
