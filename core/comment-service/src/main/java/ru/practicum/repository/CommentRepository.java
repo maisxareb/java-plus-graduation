@@ -1,20 +1,19 @@
 package ru.practicum.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import ru.practicum.model.Comment;
 
 import java.util.List;
 
+@Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-    List<Comment> findAllByEventOrderByCreatedAsc(Long event);
 
-    List<Comment> findAllByAuthor(Long author);
+    List<Comment> findAllByEventIdAndAuthorId(Long eventId, Long userId);
 
-    @Query("SELECT c.id FROM Comment c WHERE c.author = :author")
-    List<Long> findIdsByAuthor(@Param("author") Long author);
+    List<Comment> findByEventId(Long eventId);
 
-    @Query("SELECT c.id FROM Comment c WHERE c.event = :event")
-    List<Long> findIdsByEvent(@Param("event") Long event);
+    boolean existsByIdAndEventId(Long id, Long eventId);
+
+    boolean existsByIdAndAuthorId(Long commentId, Long authorId);
 }

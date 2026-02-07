@@ -1,41 +1,43 @@
 package ru.practicum.exceptions;
 
-import jakarta.validation.ValidationException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.practicum.exception.*;
+import ru.practicum.user_service.exception.ApiError;
+import ru.practicum.user_service.exception.BadRequestException;
+import ru.practicum.user_service.exception.ConflictException;
+import ru.practicum.user_service.exception.NotFoundException;
+import ru.practicum.user_service.exception.dto.ErrorResponse;
 
+import java.time.LocalDateTime;
+
+@Slf4j
 @RestControllerAdvice
 public class ErrorHandler {
-    @ExceptionHandler({PaginationException.class, NotFoundException.class})
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundException(final RuntimeException e) {
-        return new ErrorResponse(
-                "NOT_FOUND",
-                "The required object was not found.",
-                e.getMessage()
-        );
-    }
 
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationException(ValidationException e) {
-        return new ErrorResponse(
-                "BAD_REQUEST",
-                "Incorrectly made request.",
-                e.getMessage()
-        );
-    }
 
-    @ExceptionHandler({BadParameterException.class, CreateConditionException.class, DataConflictException.class, ConflictException.class, ConstraintException.class})
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleConstraintException(final RuntimeException e) {
-        return new ErrorResponse(
-                "FORBIDDEN",
-                "For the requested operation the conditions are not met.",
-                e.getMessage()
+    @ExceptionHandler(ApiError.class)
+    public ResponseEntity<ErrorResponse> handleApiException(ApiError ex, HttpServletRequest request) {
+        HttpStatus status = switch (ex) {
+            case NotFoundException ignored -> HttpStatus.NOT_FOUND;
+            case BadRequestException ignored -> HttpStatus.BAD_REQUEST;
+            case ConflictException ignored -> HttpStatus.CONFLICT;
+            default -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+
+        log.warn("{}: {}", status, ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                status.name(),
+                ex.getMessage(),
+                request.getRequestURI()
         );
+
+        return new ResponseEntity<>(response, status);
     }
 }

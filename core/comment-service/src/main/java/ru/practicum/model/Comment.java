@@ -1,36 +1,45 @@
 package ru.practicum.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
+@Table(name = "comments")
 @Getter
 @Setter
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "comments", schema = "public")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class Comment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
 
-    @NotBlank
-    @Column(name = "text", nullable = false)
-    String text;
+    @Column(length = 300,
+            nullable = false)
+    private String annotation;
 
-    @NotNull
-    @Column(name = "created", columnDefinition = "TIMESTAMP WITHOUT TIME ZONE", nullable = false)
-    LocalDateTime created;
+    @Column(length = 3000,
+            nullable = false)
+    private String text;
 
-    @Column(name = "author", nullable = false)
-    Long author;
+    @Column(name = "published_on",
+            nullable = false)
+    @Builder.Default
+    private Instant publishedOn = Instant.now();
 
-    @Column(name = "event", nullable = false)
-    Long event;
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
+
+    @Column(name = "event_id", nullable = false)
+    private Long eventId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private CommentState state = CommentState.PUBLIC;
 }
