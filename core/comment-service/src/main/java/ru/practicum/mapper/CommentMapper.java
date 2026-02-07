@@ -1,64 +1,45 @@
 package ru.practicum.mapper;
 
 import org.mapstruct.*;
-import ru.practicum.comment.dto.CommentRequest;
-import ru.practicum.comment.dto.CommentResponse;
+import ru.practicum.dto.CommentFullDto;
+import ru.practicum.dto.CommentPublicDto;
+import ru.practicum.dto.NewCommentDto;
+import ru.practicum.dto.UpdCommentDto;
 import ru.practicum.model.Comment;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 
 @Mapper(componentModel = "spring")
 public interface CommentMapper {
 
-    String TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "authorId", ignore = true)
+    @Mapping(target = "eventId", ignore = true)
+    @Mapping(target = "publishedOn", ignore = true)
+    @Mapping(target = "state", ignore = true)
+    Comment toEntity(NewCommentDto newDto);
 
-    DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern(TIME_PATTERN);
+    @Mapping(target = "authorId", source = "authorId")
+    @Mapping(target = "eventId", source = "eventId")
+    @Mapping(target = "publishedOn", expression = "java(toLocalDateTime(comment.getPublishedOn()))")
+    CommentFullDto toFullDto(Comment comment);
+
+    @Mapping(target = "authorName", ignore = true)
+    @Mapping(target = "eventTitle", ignore = true)
+    @Mapping(target = "publishedOn", expression = "java(toLocalDateTime(comment.getPublishedOn()))")
+    CommentPublicDto toPublicDto(Comment comment);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "text", source = "commentRequest.text")
-    @Mapping(target = "author", source = "author")
-    @Mapping(target = "created", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "event", source = "event")
-    Comment toComment(CommentRequest commentRequest, Long author, Long event);
+    @Mapping(target = "authorId", ignore = true)
+    @Mapping(target = "eventId", ignore = true)
+    @Mapping(target = "publishedOn", ignore = true)
+    @Mapping(target = "state", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateFromDto(UpdCommentDto updDto, @MappingTarget Comment comment);
 
-    @Mapping(target = "id", source = "comment.id")
-    @Mapping(target = "text", source = "comment.text")
-    @Mapping(target = "created", source = "comment.created", qualifiedByName = "formatLocalDateTime")
-    @Mapping(target = "author", source = "comment.author")
-    @Mapping(target = "event", source = "comment.event")
-    CommentResponse toCommentResponse(Comment comment);
-
-    @Named("formatLocalDateTime")
-    static String formatLocalDateTime(LocalDateTime localDateTime) {
-        if (localDateTime == null) {
-            return null;
-        }
-        return localDateTime.format(TIME_FORMAT);
-    }
-
-    static Comment toCommentStatic(CommentRequest commentRequest, Long author, Long event) {
-        if (commentRequest == null) {
-            return null;
-        }
-        Comment comment = new Comment();
-        comment.setText(commentRequest.getText());
-        comment.setAuthor(author);
-        comment.setCreated(LocalDateTime.now());
-        comment.setEvent(event);
-        return comment;
-    }
-
-    static CommentResponse toCommentResponseStatic(Comment comment) {
-        if (comment == null) {
-            return null;
-        }
-        CommentResponse commentResponse = new CommentResponse();
-        commentResponse.setId(comment.getId());
-        commentResponse.setText(comment.getText());
-        commentResponse.setCreated(comment.getCreated().format(TIME_FORMAT));
-        commentResponse.setAuthor(comment.getAuthor());
-        commentResponse.setEvent(comment.getEvent());
-        return commentResponse;
+    default LocalDateTime toLocalDateTime(Instant instant) {
+        return instant != null ? LocalDateTime.ofInstant(instant, ZoneOffset.UTC) : null;
     }
 }

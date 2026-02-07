@@ -1,38 +1,35 @@
 package ru.practicum.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
-import ru.practicum.request.dto.RequestStatus;
+import lombok.*;
+import ru.practicum.request_service.enums.RequestStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
+@Table(name = "requests")
 @Getter
 @Setter
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "requests", schema = "public")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class Request {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
 
-    @NotNull
-    @Column(name = "created", columnDefinition = "TIMESTAMP WITHOUT TIME ZONE", nullable = false)
-    LocalDateTime created;
+    @Column(name = "event_id", nullable = false)
+    private Long eventId;
 
-    @Column(name = "event", nullable = false)
-    Long event;
+    @Column(name = "requester_id", nullable = false)
+    private Long requesterId;
 
-    @Column(name = "requester", nullable = false)
-    Long requester;
+    @Column
+    @Builder.Default
+    private Instant created = Instant.now();
 
-    @Enumerated(value = EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    RequestStatus status;
+    @Enumerated(EnumType.STRING)
+    private RequestStatus status;
 }

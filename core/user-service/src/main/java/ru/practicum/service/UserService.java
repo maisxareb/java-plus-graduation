@@ -1,19 +1,19 @@
 package ru.practicum.service;
 
-import ru.practicum.user.dto.UserDto;
-import ru.practicum.user.dto.UserRequest;
+import ru.practicum.user_service.dto.NewUserRequest;
+import ru.practicum.user_service.dto.UserDto;
 
 import java.util.List;
-import java.util.Map;
 
 public interface UserService {
-    UserDto addUser(UserRequest userRequest);
 
-    List<UserDto> getUsers(List<Long> ids, Integer from, Integer size);
+    List<UserDto> findAllBy(List<Long> ids, Integer from, Integer size);
 
-    void deleteUser(Long id);
+    UserDto add(NewUserRequest newDto);
 
-    UserDto getUserById(long userId);
+    void delete(Long userId);
 
-    Map<Long, UserDto> getAllUsers(List<Long> ids);
+    UserDto getUserById(Long userId);
+
+    List<UserDto> getUsersByIds(List<Long> ids);
 }

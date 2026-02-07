@@ -1,72 +1,112 @@
 services:
-
-  stats-service-db:
+  stats-db:
     image: postgres:16.1
-    container_name: stats_service
+    container_name: ewm-stats-db
     ports:
-      - "5433:5432"
+      - "6432:5432"
     environment:
       - POSTGRES_DB=stats
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=stats
+      - POSTGRES_PASSWORD=stats
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-
-  event-service-db:
+  event-db:
     image: postgres:16.1
-    container_name: event_service
+    container_name: ewm-event-db
     ports:
-      - "5432:5432"
+      - "4432:5432"
     environment:
       - POSTGRES_DB=event
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=event
+      - POSTGRES_PASSWORD=event
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  user-service-db:
+  user-db:
     image: postgres:16.1
-    container_name: user_service
+    container_name: ewm-user-db
     ports:
-      - "5434:5432"
+      - "4433:5432"
     environment:
       - POSTGRES_DB=user
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  category-service-db:
+  request-db:
     image: postgres:16.1
-    container_name: category_service
+    container_name: ewm-request-db
     ports:
-      - "5435:5432"
-    environment:
-      - POSTGRES_DB=category
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-
-  comment-service-db:
-    image: postgres:16.1
-    container_name: comment_service
-    ports:
-      - "5436:5432"
-    environment:
-      - POSTGRES_DB=comment
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-
-  compilation-service-db:
-    image: postgres:16.1
-    container_name: compilation_service
-    ports:
-      - "5437:5432"
-    environment:
-      - POSTGRES_DB=compilation
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-
-  request-service-db:
-    image: postgres:16.1
-    container_name: request_service
-    ports:
-      - "5438:5432"
+      - "4434:5432"
     environment:
       - POSTGRES_DB=request
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=request
+      - POSTGRES_PASSWORD=request
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  comment-db:
+    image: postgres:16.1
+    container_name: ewm-comment-db
+    ports:
+      - "4435:5432"
+    environment:
+      - POSTGRES_DB=comment
+      - POSTGRES_USER=comment
+      - POSTGRES_PASSWORD=comment
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  kafka:
+    image: confluentinc/confluent-local:7.4.3
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      CLUSTER_ID: 'K0EA9p0yEe6MkAAAAkKsEg'
+
+  kafka-init-topics:
+    image: confluentinc/confluent-local:7.4.3
+    container_name: kafka-init-topics
+    depends_on:
+      - kafka
+    command: "bash -c \
+            'kafka-topics --create --topic stats.user-actions.v1 \
+                         --partitions 1 --replication-factor 1 --if-not-exists \
+                         --bootstrap-server kafka:29092 && \
+            kafka-topics --create --topic stats.events-similarity.v1 \
+                         --partitions 1 --replication-factor 1 --if-not-exists \
+                         --bootstrap-server kafka:29092'"
+    init: true
