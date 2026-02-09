@@ -1,22 +1,25 @@
 package ru.practicum.model;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
+import lombok.*;
 
+@Entity
+@Table(name = "users")
 @Getter
 @Setter
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Entity
-@Table(name = "users", schema = "public")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
-    @Column(name = "name")
-    String name;
-    @Column(name = "email", unique = true, nullable = false)
-    String email;
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String name;
 }

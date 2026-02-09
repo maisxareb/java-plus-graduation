@@ -12,15 +12,12 @@
     <artifactId>core</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>category-service</module>
         <module>interaction-api</module>
-        <module>comment-service</module>
-        <module>compilation-service</module>
+        <module>user-service</module>
         <module>event-service</module>
         <module>request-service</module>
-        <module>user-service</module>
+        <module>comment-service</module>
     </modules>
-
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
